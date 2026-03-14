@@ -38,10 +38,9 @@ export function DashboardHero({
           href={`/plan?${planParams}`}
           className="rounded-[1.5rem] border border-white/20 px-5 py-4 text-sm font-semibold text-white transition hover:bg-white/10"
         >
-          {user ? "Build stability roadmap" : "Sign in for roadmap planning"}
+          {user ? "Build stability roadmap" : "Log in for roadmap planning"}
         </Link>
       </div>
     </section>
   );
 }
-

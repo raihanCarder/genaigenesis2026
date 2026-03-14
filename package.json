@@ -10,8 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "firebase": "^11.0.0",
-    "firebase-admin": "^13.0.0",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.57.4",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

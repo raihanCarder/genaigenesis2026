@@ -9,7 +9,7 @@ export function RoadmapGate() {
         <p className="text-xs uppercase tracking-[0.22em] text-white/55">Signed-in feature</p>
         <h1 className="font-display text-4xl font-semibold">Roadmap planning is for logged-in users</h1>
         <p className="max-w-2xl text-white/78">
-          Sign in to build a longer-term stability plan across this week, this month, and what comes next.
+          Create an account or log in to build a longer-term stability plan across this week, this month, and what comes next.
         </p>
         <div className="w-fit">
           <SignInButton />
@@ -18,4 +18,3 @@ export function RoadmapGate() {
     </div>
   );
 }
-

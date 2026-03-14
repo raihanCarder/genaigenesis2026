@@ -1,6 +1,6 @@
 # Genesis Navigator
 
-Toronto support navigator built with Next.js, Zustand, Firebase, Google Maps, and Gemini.
+Toronto support navigator built with Next.js, Zustand, Supabase, Google Maps, and Gemini.
 
 The app has three product layers:
 
@@ -33,8 +33,8 @@ What works in this mode:
 
 What does not fully work in this mode:
 
-- Google sign-in
-- authenticated roadmap generation with real Firebase auth
+- email/password sign-in
+- authenticated roadmap generation with real Supabase auth
 - saved places persistence across sessions
 - live Google geocoding and supplemental Google Places data
 - live Gemini responses
@@ -47,9 +47,9 @@ Required external services:
 
 - Google Maps Platform
 - Gemini API
-- Firebase Authentication
-- Firebase Firestore
-- Firebase Admin credentials for server-side auth verification
+- Supabase Auth
+- Supabase Postgres
+- Supabase SSR cookie sessions for server-side route protection
 
 ## Setup
 
@@ -62,16 +62,23 @@ npm install
 2. Copy env vars:
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-3. Start the app:
+3. Set up Supabase:
+
+- create a Supabase project
+- enable Email auth
+- copy `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- run the SQL in [supabase/favorites.sql](/Users/raihancarder/Desktop/repos/genaigenesis2026/supabase/favorites.sql) inside the Supabase SQL editor
+
+4. Start the app:
 
 ```bash
 npm run dev
 ```
 
-4. Optional verification:
+5. Optional verification:
 
 ```bash
 npm run typecheck
@@ -112,44 +119,44 @@ If missing:
 
 - the app returns local fallback chat and roadmap responses instead of live model output
 
-### Firebase Client
+### Supabase
 
-- `NEXT_PUBLIC_FIREBASE_API_KEY`
-- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
 Used for:
 
-- Google sign-in in the browser
+- email/password auth in the browser
+- cookie-backed server auth in route handlers and protected pages
+- favorites persistence in Postgres
 
 If missing:
 
 - the sign-in button is disabled
 - roadmap and saved pages remain blocked behind auth
 
-### Firebase Admin
+### Supabase Database Setup
 
-- `FIREBASE_PROJECT_ID`
-- `FIREBASE_CLIENT_EMAIL`
-- `FIREBASE_PRIVATE_KEY`
+This app uses Supabase browser auth plus cookie-backed server auth. It does not require a service role key for the current feature set.
 
-Used for:
+Quick setup in the Supabase dashboard:
 
-- verifying Firebase ID tokens on the server
-- Firestore reads and writes for favorites
+1. Create a new project.
+2. Go to `Authentication` -> `Providers` -> `Email` and enable email/password sign-ins.
+3. Optional: disable email confirmation if you want sign-up to create an immediately usable account during local development.
+4. Go to `Project Settings` -> `API`.
+5. Copy the project URL into `NEXT_PUBLIC_SUPABASE_URL`.
+6. Copy the publishable key into `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+   If your dashboard still labels it as the anon/public key, use that value.
+7. Go to `SQL Editor`.
+8. Paste the contents of [supabase/favorites.sql](/Users/raihancarder/Desktop/repos/genaigenesis2026/supabase/favorites.sql) and run it.
 
-Important:
+That SQL creates:
 
-- `FIREBASE_PRIVATE_KEY` must be the private key string from a Firebase service account
-- if you paste it into `.env.local`, escaped newlines are supported because the server replaces `\\n` with real newlines
-
-If missing:
-
-- authenticated API routes cannot verify real users
-- favorites and roadmap auth enforcement will not work correctly in a real signed-in flow
+- `public.favorites`
+- a unique constraint on `(user_id, service_id)`
+- an index for recent favorites
+- row-level security policies so users can only read and write their own rows
 
 ## Data You Need
 
@@ -260,17 +267,18 @@ The app supplements curated data with Google Places only for categories where ma
 
 You do not need to preload that data locally. It is fetched at runtime when `GOOGLE_MAPS_API_KEY` is present.
 
-### Firebase / Firestore
+### Supabase / Postgres
 
-Favorites are stored under:
+Favorites are stored in:
 
-- `users/{uid}/favorites/{serviceId}`
+- `public.favorites`
 
-Each favorite stores:
+Each favorite row stores:
 
-- `serviceId`
-- `service`
-- `savedAt`
+- `user_id`
+- `service_id`
+- `service_snapshot`
+- `saved_at`
 
 ### Gemini
 
@@ -307,8 +315,8 @@ If keys are missing, the code does not fully fail:
 
 - missing Maps key: fallback Toronto geocoding is used
 - missing Gemini key: local fallback chat and roadmap responses are used
-- missing Firebase client config: sign-in is disabled
-- missing Firebase admin config: real authenticated server verification is unavailable
+- missing Supabase config: sign-in is disabled
+- missing Supabase table setup: favorites will fail until the SQL is applied
 
 That makes local UI development easy, but for the full MVP you need all env vars populated.
 
