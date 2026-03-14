@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getFirebaseClientAuth } from "@/lib/adapters/firebase-client";
 import type { LocationContext, ServiceWithMeta } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 import { ServiceCard } from "@/components/service-card";
@@ -11,25 +10,33 @@ export function SavedClient({ initialLocation }: { initialLocation: LocationCont
   const user = useAppStore((state) => state.user);
   const [favorites, setFavorites] = useState<ServiceWithMeta[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadFavorites() {
       if (!user) {
-        return;
-      }
-      const token = await getFirebaseClientAuth()?.currentUser?.getIdToken();
-      if (!token) {
+        setFavorites([]);
+        setError(null);
         return;
       }
       setLoading(true);
-      const result = await fetch("/api/favorites", {
-        headers: {
-          Authorization: `Bearer ${token}`
+      setError(null);
+      try {
+        const result = await fetch("/api/favorites");
+        const payload = (await result.json()) as ServiceWithMeta[] | { error?: string };
+        if (!result.ok || !Array.isArray(payload)) {
+          throw new Error(
+            !Array.isArray(payload) && typeof payload.error === "string"
+              ? payload.error
+              : "Unable to load favorites."
+          );
         }
-      });
-      const payload = (await result.json()) as ServiceWithMeta[];
-      setFavorites(payload);
-      setLoading(false);
+        setFavorites(payload);
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : "Unable to load favorites.");
+      } finally {
+        setLoading(false);
+      }
     }
     void loadFavorites();
   }, [user]);
@@ -47,7 +54,7 @@ export function SavedClient({ initialLocation }: { initialLocation: LocationCont
           <p className="text-xs uppercase tracking-[0.22em] text-white/55">Signed-in feature</p>
           <h1 className="font-display text-4xl font-semibold">Save services for later</h1>
           <p className="max-w-2xl text-white/78">
-            Sign in to keep your shortlist of reliable places and return to them later.
+            Create an account or log in to keep your shortlist of reliable places and return to them later.
           </p>
           <div className="w-fit">
             <SignInButton />
@@ -66,6 +73,11 @@ export function SavedClient({ initialLocation }: { initialLocation: LocationCont
       </section>
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {loading ? <div className="rounded-4xl bg-white p-6 shadow-card">Loading favorites...</div> : null}
+        {error ? (
+          <div className="rounded-4xl border border-red-200 bg-red-50 p-6 text-red-800 shadow-card">
+            {error}
+          </div>
+        ) : null}
         {!loading && favorites.length === 0 ? (
           <div className="rounded-4xl bg-white p-6 text-black/55 shadow-card">
             No favorites yet. Save services from the dashboard or detail views.
@@ -78,4 +90,3 @@ export function SavedClient({ initialLocation }: { initialLocation: LocationCont
     </div>
   );
 }
-

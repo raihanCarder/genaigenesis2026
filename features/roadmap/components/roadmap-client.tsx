@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { getFirebaseClientAuth } from "@/lib/adapters/firebase-client";
 import type { LocationContext, RoadmapResponse } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 import { requestRoadmap } from "@/features/roadmap/api/roadmap-api";
@@ -22,18 +21,11 @@ export function RoadmapClient({ initialLocation }: { initialLocation: LocationCo
   const [requestError, setRequestError] = useState<string | null>(null);
 
   async function handleGeneratePlan() {
-    const token = await getFirebaseClientAuth()?.currentUser?.getIdToken();
-    if (!token) {
-      setRequestError("You need to sign in before generating a roadmap.");
-      return;
-    }
-
     setLoading(true);
     setRequestError(null);
 
     try {
       const payload = await requestRoadmap({
-        token,
         needs,
         location: initialLocation,
         services

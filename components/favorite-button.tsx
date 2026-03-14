@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getFirebaseClientAuth } from "@/lib/adapters/firebase-client";
 import type { ServiceWithMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
@@ -25,18 +24,13 @@ export function FavoriteButton({
     if (!user) {
       return;
     }
-    const token = await getFirebaseClientAuth()?.currentUser?.getIdToken();
-    if (!token) {
-      return;
-    }
     setPending(true);
     try {
       const action = saved ? "remove" : "save";
       const response = await fetch("/api/favorites", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           action,
@@ -63,7 +57,7 @@ export function FavoriteButton({
           compact && "px-2.5 py-1.5"
         )}
       >
-        Sign in to save
+        Log in to save
       </button>
     );
   }
@@ -82,4 +76,3 @@ export function FavoriteButton({
     </button>
   );
 }
-
