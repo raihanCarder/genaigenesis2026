@@ -1,62 +1,55 @@
-import type { ServiceWithMeta } from "@/lib/types";
-import { getFirebaseAdminFirestore } from "@/lib/adapters/firebase-admin";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { ServiceWithMetaSchema, type ServiceWithMeta } from "@/lib/types";
 
-type FavoriteRecord = {
-  serviceId: string;
-  service: ServiceWithMeta;
-  savedAt: string;
+type FavoriteRow = {
+  service_snapshot: unknown;
+  saved_at: string;
 };
 
-const memoryFavorites = new Map<string, Map<string, FavoriteRecord>>();
+export async function listFavorites(supabase: SupabaseClient, userId: string) {
+  const { data, error } = await supabase
+    .from("favorites")
+    .select("service_snapshot, saved_at")
+    .eq("user_id", userId)
+    .order("saved_at", { ascending: false });
 
-function getUserFavoritesMap(userId: string) {
-  let favorites = memoryFavorites.get(userId);
-  if (!favorites) {
-    favorites = new Map<string, FavoriteRecord>();
-    memoryFavorites.set(userId, favorites);
+  if (error) {
+    throw new Error(error.message);
   }
-  return favorites;
+
+  return (data as FavoriteRow[]).map((entry) => ServiceWithMetaSchema.parse(entry.service_snapshot));
 }
 
-export async function listFavorites(userId: string) {
-  const firestore = getFirebaseAdminFirestore();
-  if (!firestore) {
-    return Array.from(getUserFavoritesMap(userId).values())
-      .sort((left, right) => right.savedAt.localeCompare(left.savedAt))
-      .map((entry) => entry.service);
+export async function saveFavorite(
+  supabase: SupabaseClient,
+  userId: string,
+  service: ServiceWithMeta
+) {
+  const { error } = await supabase.from("favorites").upsert(
+    {
+      user_id: userId,
+      service_id: service.id,
+      service_snapshot: service,
+      saved_at: new Date().toISOString()
+    },
+    {
+      onConflict: "user_id,service_id"
+    }
+  );
+
+  if (error) {
+    throw new Error(error.message);
   }
-  const snapshot = await firestore
-    .collection("users")
-    .doc(userId)
-    .collection("favorites")
-    .orderBy("savedAt", "desc")
-    .get();
-  return snapshot.docs.map((doc) => doc.data().service as ServiceWithMeta);
 }
 
-export async function saveFavorite(userId: string, service: ServiceWithMeta) {
-  const firestore = getFirebaseAdminFirestore();
-  const savedAt = new Date().toISOString();
-  if (!firestore) {
-    getUserFavoritesMap(userId).set(service.id, {
-      serviceId: service.id,
-      service,
-      savedAt
-    });
-    return;
-  }
-  await firestore.collection("users").doc(userId).collection("favorites").doc(service.id).set({
-    serviceId: service.id,
-    service,
-    savedAt
-  });
-}
+export async function removeFavorite(supabase: SupabaseClient, userId: string, serviceId: string) {
+  const { error } = await supabase
+    .from("favorites")
+    .delete()
+    .eq("user_id", userId)
+    .eq("service_id", serviceId);
 
-export async function removeFavorite(userId: string, serviceId: string) {
-  const firestore = getFirebaseAdminFirestore();
-  if (!firestore) {
-    getUserFavoritesMap(userId).delete(serviceId);
-    return;
+  if (error) {
+    throw new Error(error.message);
   }
-  await firestore.collection("users").doc(userId).collection("favorites").doc(serviceId).delete();
 }

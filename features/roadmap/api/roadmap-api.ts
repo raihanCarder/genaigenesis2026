@@ -21,7 +21,6 @@ export async function fetchRoadmapServices(location: LocationContext): Promise<S
 }
 
 export async function requestRoadmap(input: {
-  token: string;
   needs: string[];
   location: LocationContext;
   services: ServiceWithMeta[];
@@ -29,8 +28,7 @@ export async function requestRoadmap(input: {
   const payload = await fetchJson<unknown>("/api/roadmap", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${input.token}`
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       needs: input.needs,
@@ -48,4 +46,3 @@ export async function requestRoadmap(input: {
 
   return RoadmapResponseSchema.parse(payload);
 }
-
