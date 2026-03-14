@@ -11,7 +11,7 @@ export default function HomePage() {
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-black/65">
             Browse essential services without signing in. Use grounded chat for local questions.
-            Sign in only when you want a longer-term roadmap or saved places.
+            Create an account or log in only when you want a longer-term roadmap or saved places.
           </p>
         </div>
         <div className="grid gap-6 md:grid-cols-[1.05fr,0.95fr]">
@@ -45,4 +45,3 @@ export default function HomePage() {
     </div>
   );
 }
-
