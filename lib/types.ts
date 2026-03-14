@@ -83,6 +83,28 @@ export const SessionUserSchema = z.object({
   photoURL: z.string().nullable().optional()
 });
 
+export const LocationContextSchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+  label: z.string(),
+  placeId: z.string().optional(),
+  city: z.string().optional(),
+  region: z.string().optional(),
+  country: z.string().optional()
+});
+
+export const LocationSuggestionSchema = z.object({
+  placeId: z.string().optional(),
+  label: z.string(),
+  primaryText: z.string(),
+  secondaryText: z.string().optional()
+});
+
+export const LocationAutocompleteResponseSchema = z.array(LocationSuggestionSchema);
+export const LocationGeocodeResponseSchema = LocationContextSchema.extend({
+  normalizedLocation: z.string()
+});
+
 export type ServiceCategory = z.infer<typeof ServiceCategorySchema>;
 export type SourceType = z.infer<typeof SourceTypeSchema>;
 export type FreshnessState = z.infer<typeof FreshnessStateSchema>;
@@ -91,12 +113,8 @@ export type ChatResponse = z.infer<typeof ChatResponseSchema>;
 export type RoadmapResponse = z.infer<typeof RoadmapResponseSchema>;
 export type Favorite = z.infer<typeof FavoriteSchema>;
 export type SessionUser = z.infer<typeof SessionUserSchema>;
-
-export type LocationContext = {
-  latitude: number;
-  longitude: number;
-  label: string;
-};
+export type LocationContext = z.infer<typeof LocationContextSchema>;
+export type LocationSuggestion = z.infer<typeof LocationSuggestionSchema>;
 
 export type ServiceWithMeta = z.infer<typeof ServiceWithMetaSchema>;
 

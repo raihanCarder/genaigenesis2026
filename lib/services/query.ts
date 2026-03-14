@@ -12,6 +12,13 @@ type SearchParams = {
   openNow?: boolean;
 };
 
+const supplementalCategories: ServiceCategory[] = [
+  "bathrooms",
+  "clinics",
+  "services",
+  "wifi-charging"
+];
+
 function matchesCategory(service: ServiceWithMeta, category?: ServiceCategory) {
   return !category || service.category === category;
 }
@@ -45,7 +52,16 @@ export async function searchServices(params: SearchParams) {
       )
     )
   );
-  const supplemental = (await searchSupplementalPlaces(params)).map((service) =>
+  const supplementalResults = await Promise.all(
+    (params.category ? [params.category] : supplementalCategories).map((category) =>
+      searchSupplementalPlaces({
+        latitude: params.latitude,
+        longitude: params.longitude,
+        category
+      })
+    )
+  );
+  const supplemental = supplementalResults.flat().map((service) =>
     withDistance(
       service,
       haversineDistanceMeters(
@@ -92,4 +108,3 @@ export async function getServiceById(input: {
   });
   return services.find((service) => service.id === input.id) ?? null;
 }
-

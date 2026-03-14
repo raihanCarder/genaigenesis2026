@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { LocationContext, ServiceWithMeta } from "@/lib/types";
+import { buildLocationSearchParams } from "@/lib/location";
 import { useAppStore } from "@/store/app-store";
 import { ServiceCard } from "@/components/service-card";
 import { SignInButton } from "@/components/sign-in-button";
@@ -41,11 +42,7 @@ export function SavedClient({ initialLocation }: { initialLocation: LocationCont
     void loadFavorites();
   }, [user]);
 
-  const locationParams = new URLSearchParams({
-    lat: initialLocation.latitude.toString(),
-    lng: initialLocation.longitude.toString(),
-    label: initialLocation.label
-  }).toString();
+  const locationParams = buildLocationSearchParams(initialLocation);
 
   if (!user) {
     return (

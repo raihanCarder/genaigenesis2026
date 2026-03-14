@@ -1,17 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FavoriteButton } from "@/components/favorite-button";
-import { buildDirectionsUrl, TORONTO_CENTER } from "@/lib/adapters/google-maps";
+import { buildDirectionsUrl } from "@/lib/adapters/google-maps";
+import { buildLocationSearchParams, getLocationFromSearchParams } from "@/lib/location";
 import { getServiceById } from "@/lib/services/query";
-
-function getLocationFromSearchParams(searchParams: Record<string, string | string[] | undefined>) {
-  const lat = Number(searchParams.lat);
-  const lng = Number(searchParams.lng);
-  const label = typeof searchParams.label === "string" ? searchParams.label : TORONTO_CENTER.label;
-  return Number.isFinite(lat) && Number.isFinite(lng)
-    ? { latitude: lat, longitude: lng, label }
-    : TORONTO_CENTER;
-}
 
 export default async function ServiceDetailPage({
   params,
@@ -32,11 +24,7 @@ export default async function ServiceDetailPage({
     notFound();
   }
 
-  const locationParams = new URLSearchParams({
-    lat: location.latitude.toString(),
-    lng: location.longitude.toString(),
-    label: location.label
-  }).toString();
+  const locationParams = buildLocationSearchParams(location);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
@@ -96,4 +84,3 @@ export default async function ServiceDetailPage({
     </div>
   );
 }
-

@@ -2,8 +2,9 @@ import { z } from "zod";
 
 const serverEnvSchema = z.object({
   GOOGLE_MAPS_API_KEY: z.string().optional(),
+  GOOGLE_PLACES_API_FLAVOR: z.enum(["legacy", "new"]).default("legacy"),
   GEMINI_API_KEY: z.string().optional(),
-  GEMINI_MODEL: z.string().default("gemini-1.5-flash")
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash")
 });
 
 const clientEnvSchema = z.object({
