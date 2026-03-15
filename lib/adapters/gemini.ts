@@ -100,8 +100,8 @@ async function generateJson<T>(prompt: string, schemaName: string) {
       },
       body: JSON.stringify({
         generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.3
+          response_mime_type: "application/json",
+          temperature: 0.5
         },
         contents: [
           {
@@ -115,6 +115,8 @@ async function generateJson<T>(prompt: string, schemaName: string) {
   );
 
   if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("Gemini request failed:", errorBody);
     throw new Error(`Gemini request failed with ${response.status}`);
   }
 
@@ -125,7 +127,7 @@ async function generateJson<T>(prompt: string, schemaName: string) {
       };
     }>;
   };
-  const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = payload.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/```json|```/g, "").trim();
   if (!text) {
     throw new Error(`Gemini did not return content for ${schemaName}.`);
   }
@@ -166,28 +168,39 @@ export async function generateRoadmap(payload: RoadmapRequestPayload) {
   }
   try {
     const prompt = [
-      "You are generating a stability roadmap for an authenticated user.",
-      "Use only the provided services when referencing serviceId values.",
-      "Return strict JSON matching RoadmapResponse.",
-      "Focus on this week, this month, and longer term.",
-      `Needs: ${payload.needs.join(", ")}`,
-      `Constraints: ${JSON.stringify(payload.constraints ?? {})}`,
-      `Services: ${JSON.stringify(buildServiceSummary(payload.services))}`
+      "You are an expert, empathetic social worker generating a highly detailed stability roadmap.",
+      "Output MUST be valid JSON matching this exact structure: { \"situationSummary\": string, \"thisWeek\": [{ \"serviceId\": string, \"reason\": string }], \"thisMonth\": [...], \"longerTerm\": [...], \"notes\": [string], \"verificationWarnings\": [string] }",
+      "RULES FOR TAILORING:",
+      "1. CONTEXT SYNTHESIS: You must deeply analyze the 'User Constraints/Background' field. Tailor the entire roadmap to their specific qualifications, history, and barriers.",
+      "2. situationSummary MUST be a robust 3-4 sentence paragraph acknowledging their specific background (e.g., leveraging their degree or past experience) while validating their current crisis.",
+      "3. 'thisWeek' MUST focus strictly on immediate survival and stability using ONLY the provided Service IDs.",
+      "4. For general advice in 'thisMonth' and 'longerTerm' where you don't have a specific service, YOU MUST STILL USE THE OBJECT FORMAT: { \"reason\": \"Your detailed, actionable advice here\" }.",
+      "5. Do not use markdown formatting or backticks.",
+      "6. Give specific instructions on what the user should do, when they should do it, what exactly they need to do, why this step matters, and what to do if these plans fail.",
+      `User Needs: ${payload.needs.join(", ")}`,
+      `User Constraints/Background: ${JSON.stringify(payload.constraints ?? {})}`,
+      `Services Available: ${JSON.stringify(buildServiceSummary(payload.services))}`
     ].join("\n");
     const parsed = await generateJson<RoadmapResponse>(prompt, "RoadmapResponse");
     const validated = RoadmapResponseSchema.parse(parsed);
     const knownIds = new Set(payload.services.map((service) => service.id));
     const sanitize = <T extends Array<{ serviceId?: string; reason: string }>>(steps: T) =>
       steps.filter((step) => !step.serviceId || knownIds.has(step.serviceId)) as T;
+
+    const verificationWarnings = new Set(validated.verificationWarnings ?? []);
+    if (payload.services.some((service) => service.freshnessState !== "fresh")) {
+      verificationWarnings.add("Some service records may be stale or incomplete.");
+    }
+
     return RoadmapResponseSchema.parse({
       ...validated,
       thisWeek: sanitize(validated.thisWeek),
       thisMonth: sanitize(validated.thisMonth),
-      longerTerm: sanitize(validated.longerTerm)
+      longerTerm: sanitize(validated.longerTerm),
+      verificationWarnings: Array.from(verificationWarnings)
     });
   } catch (error) {
-    logError("Gemini roadmap generation failed", error);
+    console.error("ALARM - AI FAILED:", error); 
     return fallbackRoadmapResponse(payload);
-  }
 }
-
+}

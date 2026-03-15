@@ -5,7 +5,10 @@ const serverEnvSchema = z.object({
   GOOGLE_PLACES_API_FLAVOR: z.enum(["legacy", "new"]).default("legacy"),
   BRAVE_SEARCH_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
-  GEMINI_MODEL: z.string().default("gemini-2.5-flash")
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
+  FIREBASE_PROJECT_ID: z.string().optional(),
+  FIREBASE_CLIENT_EMAIL: z.string().optional(),
+  FIREBASE_PRIVATE_KEY: z.string().optional()
 });
 
 const clientEnvSchema = z.object({
