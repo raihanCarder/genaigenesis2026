@@ -1,7 +1,12 @@
 "use client";
 
 import { create } from "zustand";
-import type { LocationContext, ServiceCategory, ServiceWithMeta, SessionUser } from "@/lib/types";
+import type {
+  LocationContext,
+  ServiceCategory,
+  ServiceWithMeta,
+  SessionUser,
+} from "@/lib/types";
 
 type AppState = {
   location: LocationContext | null;
@@ -40,8 +45,8 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       favoriteServiceIds: saved
         ? Array.from(new Set([...state.favoriteServiceIds, serviceId]))
-        : state.favoriteServiceIds.filter((id) => id !== serviceId)
+        : state.favoriteServiceIds.filter((id) => id !== serviceId),
     })),
   setFavoritesReady: (favoritesReady) => set({ favoritesReady }),
-  resetFavorites: () => set({ favoriteServiceIds: [], favoritesReady: true })
+  resetFavorites: () => set({ favoriteServiceIds: [], favoritesReady: true }),
 }));

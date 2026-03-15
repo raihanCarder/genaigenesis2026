@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { Globe, type GlobeConfig } from "@/components/ui/globe";
 import { buildLocationSearchParams } from "@/lib/location";
 import type {
@@ -10,28 +11,36 @@ import type {
 } from "@/lib/types";
 import { formatCategoryLabel } from "@/lib/utils";
 
-const TORONTO_GLOBE_CONFIG: GlobeConfig = {
-  phi: -0.35,
-  theta: 0.24,
+const WORLD_GLOBE_BASE_CONFIG: GlobeConfig = {
   dark: 0,
   diffuse: 0.55,
   mapBrightness: 1.15,
   baseColor: [0.98, 0.97, 0.94],
   markerColor: [221 / 255, 107 / 255, 32 / 255],
   glowColor: [1, 1, 1],
-  markers: [
-    { location: [43.6532, -79.3832], size: 0.14 },
-    { location: [43.7615, -79.4111], size: 0.07 },
-    { location: [43.7764, -79.2318], size: 0.07 },
-    { location: [43.6205, -79.5132], size: 0.07 },
-    { location: [43.589, -79.6441], size: 0.06 },
-    { location: [43.7315, -79.7624], size: 0.05 },
-    { location: [43.8561, -79.337], size: 0.05 },
-    { location: [43.8361, -79.4983], size: 0.05 },
-    { location: [43.2557, -79.8711], size: 0.05 },
-    { location: [43.8975, -78.8658], size: 0.04 },
-  ],
 };
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function toRadians(value: number) {
+  return (value * Math.PI) / 180;
+}
+
+function getFocusedGlobeAngles(location: Pick<LocationContext, "latitude" | "longitude">) {
+  const latitude = toRadians(clamp(location.latitude, -89.999, 89.999));
+  const longitude = toRadians(location.longitude);
+  const cosLatitude = Math.cos(latitude);
+  const x = cosLatitude * Math.cos(longitude);
+  const y = -cosLatitude * Math.sin(longitude);
+  const z = Math.sin(latitude);
+
+  return {
+    phi: Math.atan2(-x, z),
+    theta: Math.asin(clamp(y, -1, 1))
+  };
+}
 
 export function DashboardHero({
   location,
@@ -49,6 +58,20 @@ export function DashboardHero({
   const selectedCategoryLabel = selectedCategory
     ? formatCategoryLabel(selectedCategory)
     : "All essentials";
+  const globeConfig = useMemo(() => {
+    const { phi, theta } = getFocusedGlobeAngles(location);
+    return {
+      ...WORLD_GLOBE_BASE_CONFIG,
+      phi,
+      theta,
+      markers: [
+        {
+          location: [location.latitude, location.longitude],
+          size: 0.12
+        }
+      ]
+    } satisfies GlobeConfig;
+  }, [location.latitude, location.longitude]);
 
   return (
     <section className="glass-panel relative overflow-hidden rounded-[2rem] px-6 py-8 text-white shadow-card md:px-8 md:py-9">
@@ -104,25 +127,30 @@ export function DashboardHero({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-white/45">
-                  Service map
+                  World pin
                 </p>
-                <h2 className="font-display text-3xl font-semibold">
-                  Toronto coverage
+                <h2 className="font-display text-3xl font-semibold leading-tight">
+                  {location.label}
                 </h2>
               </div>
               <div className="rounded-full border border-white/12 bg-white/[0.08] px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/70">
-                Live context
+                Selected location
               </div>
             </div>
 
             <div className="relative min-h-[240px] flex-1 md:min-h-[260px]">
               <Globe
                 className="top-10 max-w-[380px] md:top-12 md:max-w-[560px]"
-                config={TORONTO_GLOBE_CONFIG}
+                config={globeConfig}
+                pins={[
+                  {
+                    location: [location.latitude, location.longitude],
+                    label: location.label
+                  }
+                ]}
+                autoRotateSpeed={0.005}
               />
             </div>
-
-            <div className="relative z-10 flex flex-wrap items-end justify-between gap-3 text-sm text-white/65"></div>
           </div>
         </div>
       </div>
