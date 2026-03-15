@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   Heart,
@@ -49,8 +50,15 @@ export function TopNav() {
             href="/"
             className="flex items-center gap-3 rounded-full bg-[#0b0b0b]/88 px-3 py-2 shadow-card backdrop-blur-xl transition"
           >
-            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-sm font-bold text-black md:h-11 md:w-11 md:text-base">
-              GN
+            <div className="relative h-10 w-10 overflow-hidden rounded-2xl md:h-11 md:w-11">
+              <Image
+                src="/beacon1.png"
+                alt="Beacon logo"
+                fill
+                sizes="44px"
+                className="object-contain"
+                priority
+              />
             </div>
             <div className="hidden lg:block">
               <div className="font-display text-base font-semibold tracking-tight">

@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { categoryOrder } from "@/lib/constants/categories";
 import { buildLocationSearchParams } from "@/lib/location";
+import { scoreService } from "@/lib/services/ranking";
 import type { LocationContext, ServiceCategory, ServiceWithMeta } from "@/lib/types";
 import { formatCategoryLabel } from "@/lib/utils";
 import { ServiceCard } from "@/components/service-card";
 
-const CAROUSEL_PAGE_SIZE = 3;
+const CAROUSEL_PAGE_SIZE = 2;
 
 function ServiceCarouselRow({
   services,
@@ -27,6 +28,13 @@ function ServiceCarouselRow({
     pageIndex * CAROUSEL_PAGE_SIZE,
     pageIndex * CAROUSEL_PAGE_SIZE + CAROUSEL_PAGE_SIZE
   );
+  const recommendedServiceId =
+    services.reduce<ServiceWithMeta | null>((best, service) => {
+      if (!best) {
+        return service;
+      }
+      return scoreService(service) > scoreService(best) ? service : best;
+    }, null)?.id ?? null;
 
   useEffect(() => {
     setPageIndex((current) => Math.min(current, totalPages - 1));
@@ -47,10 +55,14 @@ function ServiceCarouselRow({
       >
         <ChevronLeft className="h-5 w-5" strokeWidth={2.4} />
       </button>
-      <div className="grid flex-1 gap-4 py-1 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid flex-1 gap-4 py-1 grid-cols-1 md:grid-cols-2">
         {visibleServices.map((service) => (
           <div key={service.id} className="min-w-0">
-            <ServiceCard service={service} locationParams={locationParams} />
+            <ServiceCard
+              service={service}
+              locationParams={locationParams}
+              recommendedByBeacon={service.id === recommendedServiceId}
+            />
           </div>
         ))}
       </div>
