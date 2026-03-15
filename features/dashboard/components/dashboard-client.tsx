@@ -16,8 +16,7 @@ export function DashboardClient({
 }) {
   const [selectedCategory, setSelectedCategory] =
     useState<ServiceCategory | null>(null);
-  const { services, loading, error, location, anchorPlace, warnings } =
-    useDashboardServices(initialLocation);
+  const { services, loading, error, location, warnings } = useDashboardServices(initialLocation);
   const user = useAppStore((state) => state.user);
 
   function handleSelectCategory(category: ServiceCategory | null) {
@@ -33,34 +32,6 @@ export function DashboardClient({
         user={user}
         selectedCategory={selectedCategory}
       />
-
-      {anchorPlace ? (
-        <section className="rounded-4xl border border-black/5 bg-white p-6 shadow-card">
-          <p className="text-xs uppercase tracking-[0.22em] text-black/45">
-            Google place context
-          </p>
-          <h2 className="mt-2 font-display text-2xl font-semibold">
-            {anchorPlace.name}
-          </h2>
-          <p className="mt-3 text-sm text-black/65">{anchorPlace.address}</p>
-          <div className="mt-4 flex flex-wrap gap-3 text-sm text-black/60">
-            {anchorPlace.phone ? <span>{anchorPlace.phone}</span> : null}
-            {anchorPlace.website ? (
-              <a
-                href={anchorPlace.website}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-accentDark underline"
-              >
-                Official site
-              </a>
-            ) : null}
-            {typeof anchorPlace.openNow === "boolean" ? (
-              <span>{anchorPlace.openNow ? "Open now" : "Closed now"}</span>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
 
       {warnings.length > 0 ? (
         <section className="rounded-4xl border border-amber-200 bg-amber-50 p-6 shadow-card">

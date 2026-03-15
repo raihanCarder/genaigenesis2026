@@ -303,13 +303,13 @@ export function LocationEntry() {
               autoComplete="off"
               aria-expanded={showSuggestions}
               aria-controls="location-suggestion-list"
-              className="w-full rounded-3xl border border-black/10 bg-white px-5 py-4 outline-none transition focus:border-accent"
+              className="w-full rounded-3xl border border-black bg-white px-5 py-4 text-black outline-none transition placeholder:text-black/45 focus:border-black"
             />
             {showSuggestions ? (
               <div
                 id="location-suggestion-list"
                 role="listbox"
-                className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 grid overflow-hidden rounded-3xl border border-black/10 bg-white shadow-card"
+                className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 grid overflow-hidden rounded-3xl border border-black bg-white shadow-card"
               >
                 {loadingSuggestions && suggestions.length === 0 ? (
                   <p className="px-4 py-3 text-sm text-black/50">

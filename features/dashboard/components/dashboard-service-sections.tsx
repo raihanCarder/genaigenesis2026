@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { categoryOrder } from "@/lib/constants/categories";
 import { buildLocationSearchParams } from "@/lib/location";
 import type { LocationContext, ServiceCategory, ServiceWithMeta } from "@/lib/types";
@@ -42,9 +43,9 @@ function ServiceCarouselRow({
         onClick={() => changePage(-1)}
         disabled={!canScrollLeft}
         aria-label={`Previous ${formatCategoryLabel(category)} services`}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-lg font-semibold transition hover:border-accent/30 hover:bg-accent/5 disabled:cursor-not-allowed disabled:opacity-35"
+        className="surface-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/18 text-white transition hover:border-accent/45 hover:bg-accent/10 hover:text-accentDark disabled:cursor-not-allowed disabled:opacity-30"
       >
-        {"<"}
+        <ChevronLeft className="h-5 w-5" strokeWidth={2.4} />
       </button>
       <div className="grid flex-1 gap-4 py-1 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
         {visibleServices.map((service) => (
@@ -58,9 +59,9 @@ function ServiceCarouselRow({
         onClick={() => changePage(1)}
         disabled={!canScrollRight}
         aria-label={`Next ${formatCategoryLabel(category)} services`}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-lg font-semibold transition hover:border-accent/30 hover:bg-accent/5 disabled:cursor-not-allowed disabled:opacity-35"
+        className="surface-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/18 text-white transition hover:border-accent/45 hover:bg-accent/10 hover:text-accentDark disabled:cursor-not-allowed disabled:opacity-30"
       >
-        {">"}
+        <ChevronRight className="h-5 w-5" strokeWidth={2.4} />
       </button>
     </div>
   );

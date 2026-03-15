@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchJson } from "@/lib/api/fetch-json";
 import type { LocationContext, ServiceWithMeta } from "@/lib/types";
+import { ServiceWithMetaSchema } from "@/lib/types";
 import { buildLocationSearchParams } from "@/lib/location";
 import { useAppStore } from "@/store/app-store";
 import { ServiceCard } from "@/components/service-card";
@@ -13,6 +15,10 @@ export function SavedClient({
   initialLocation: LocationContext;
 }) {
   const user = useAppStore((state) => state.user);
+  const favoriteServiceIds = useAppStore((state) => state.favoriteServiceIds);
+  const favoritesReady = useAppStore((state) => state.favoritesReady);
+  const setFavoriteServiceIds = useAppStore((state) => state.setFavoriteServiceIds);
+  const setFavoritesReady = useAppStore((state) => state.setFavoritesReady);
   const [favorites, setFavorites] = useState<ServiceWithMeta[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,18 +33,13 @@ export function SavedClient({
       setLoading(true);
       setError(null);
       try {
-        const result = await fetch("/api/favorites");
-        const payload = (await result.json()) as
-          | ServiceWithMeta[]
-          | { error?: string };
-        if (!result.ok || !Array.isArray(payload)) {
-          throw new Error(
-            !Array.isArray(payload) && typeof payload.error === "string"
-              ? payload.error
-              : "Unable to load favorites.",
-          );
-        }
-        setFavorites(payload);
+        const payload = await fetchJson<unknown>("/api/favorites", {
+          cache: "no-store"
+        });
+        const parsed = ServiceWithMetaSchema.array().parse(payload);
+        setFavorites(parsed);
+        setFavoriteServiceIds(parsed.map((service) => service.id));
+        setFavoritesReady(true);
       } catch (loadError) {
         setError(
           loadError instanceof Error
@@ -50,9 +51,12 @@ export function SavedClient({
       }
     }
     void loadFavorites();
-  }, [user]);
+  }, [setFavoriteServiceIds, setFavoritesReady, user]);
 
   const locationParams = buildLocationSearchParams(initialLocation);
+  const visibleFavorites = favoritesReady
+    ? favorites.filter((service) => favoriteServiceIds.includes(service.id))
+    : favorites;
 
   if (!user) {
     return (
@@ -98,12 +102,12 @@ export function SavedClient({
             {error}
           </div>
         ) : null}
-        {!loading && favorites.length === 0 ? (
+        {!loading && visibleFavorites.length === 0 ? (
           <div className="surface-card rounded-4xl p-6 text-white/55 shadow-card">
             No favorites yet. Save services from the dashboard or detail views.
           </div>
         ) : null}
-        {favorites.map((service) => (
+        {visibleFavorites.map((service) => (
           <ServiceCard
             key={service.id}
             service={service}

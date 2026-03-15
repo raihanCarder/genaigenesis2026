@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { ServiceWithMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
@@ -13,15 +13,13 @@ export function FavoriteButton({
   compact?: boolean;
 }) {
   const user = useAppStore((state) => state.user);
-  const [saved, setSaved] = useState(false);
+  const saved = useAppStore((state) => state.favoriteServiceIds.includes(service.id));
+  const favoritesReady = useAppStore((state) => state.favoritesReady);
+  const setFavoriteSaved = useAppStore((state) => state.setFavoriteSaved);
   const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    setSaved(false);
-  }, [user?.uid, service.id]);
-
   async function handleToggle() {
-    if (!user) {
+    if (!user || !favoritesReady) {
       return;
     }
     setPending(true);
@@ -41,7 +39,7 @@ export function FavoriteButton({
       if (!response.ok) {
         throw new Error("Unable to update favorite.");
       }
-      setSaved(!saved);
+      setFavoriteSaved(service.id, !saved);
     } finally {
       setPending(false);
     }
@@ -66,13 +64,13 @@ export function FavoriteButton({
     <button
       type="button"
       onClick={handleToggle}
-      disabled={pending}
+      disabled={pending || !favoritesReady}
       className={cn(
         "rounded-full border border-accent/35 bg-accent/10 px-3 py-2 text-xs font-medium text-accentDark transition hover:bg-accent/15 disabled:opacity-60",
         compact && "px-2.5 py-1.5"
       )}
     >
-      {pending ? "Saving..." : saved ? "Saved" : "Save"}
+      {pending ? saved ? "Removing..." : "Saving..." : !favoritesReady ? "Loading..." : saved ? "Saved" : "Save"}
     </button>
   );
 }
