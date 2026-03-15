@@ -4,8 +4,9 @@ import { Providers } from "@/components/providers";
 import { TopNav } from "@/components/top-nav";
 
 export const metadata: Metadata = {
-  title: "Beacon",
-  description: "Lighting the way to trusted support.",
+  title: "beacon",
+  description:
+    "Toronto support navigator with grounded AI chat and authenticated stability planning.",
 };
 
 export default function RootLayout({
