@@ -4,16 +4,26 @@ export default function HomePage() {
   return (
     <div className="grid-lines">
       <section className="mx-auto grid min-h-[calc(100vh-12rem)] max-w-6xl items-center gap-10 px-4 py-12 md:min-h-[calc(100vh-10rem)] md:px-6 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:gap-12">
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-6 md:gap-10">
           <div className="max-w-3xl">
-            <h1 className="mt-4 font-display text-5xl font-semibold leading-[0.95] md:text-7xl">
-              Find nearby support, then plan toward stability.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg text-white/70">
-              Browse essential services without signing in. Use grounded chat
-              for local questions. Sign in only when you want a longer-term
-              roadmap or saved places.
-            </p>
+            <div className="md:hidden">
+              <h1 className="font-display text-5xl font-semibold tracking-tight">
+                beacon
+              </h1>
+              <p className="mt-3 text-lg text-white/68">
+                Find help. Build stability.
+              </p>
+            </div>
+            <div className="hidden md:block">
+              <h1 className="mt-4 font-display text-5xl font-semibold leading-[0.95] md:text-7xl">
+                Find nearby support, then plan toward stability.
+              </h1>
+              <p className="mt-6 max-w-2xl text-lg text-white/70">
+                Browse essential services without signing in. Use grounded chat
+                for local questions. Sign in only when you want a longer-term
+                roadmap or saved places.
+              </p>
+            </div>
           </div>
           <div className="max-w-xl">
             <LocationEntry />

@@ -45,19 +45,10 @@ function ServiceCarouselRow({
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <button
-        type="button"
-        onClick={() => changePage(-1)}
-        disabled={!canScrollLeft}
-        aria-label={`Previous ${formatCategoryLabel(category)} services`}
-        className="surface-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/18 text-white transition hover:border-accent/45 hover:bg-accent/10 hover:text-accentDark disabled:cursor-not-allowed disabled:opacity-30"
-      >
-        <ChevronLeft className="h-5 w-5" strokeWidth={2.4} />
-      </button>
-      <div className="grid flex-1 gap-4 py-1 grid-cols-1 md:grid-cols-2">
-        {visibleServices.map((service) => (
-          <div key={service.id} className="min-w-0">
+    <>
+      <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 md:hidden">
+        {services.map((service) => (
+          <div key={service.id} className="w-[min(84vw,24rem)] shrink-0 snap-start">
             <ServiceCard
               service={service}
               locationParams={locationParams}
@@ -66,16 +57,38 @@ function ServiceCarouselRow({
           </div>
         ))}
       </div>
-      <button
-        type="button"
-        onClick={() => changePage(1)}
-        disabled={!canScrollRight}
-        aria-label={`Next ${formatCategoryLabel(category)} services`}
-        className="surface-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/18 text-white transition hover:border-accent/45 hover:bg-accent/10 hover:text-accentDark disabled:cursor-not-allowed disabled:opacity-30"
-      >
-        <ChevronRight className="h-5 w-5" strokeWidth={2.4} />
-      </button>
-    </div>
+      <div className="hidden items-center gap-3 md:flex">
+        <button
+          type="button"
+          onClick={() => changePage(-1)}
+          disabled={!canScrollLeft}
+          aria-label={`Previous ${formatCategoryLabel(category)} services`}
+          className="surface-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/18 text-white transition hover:border-accent/45 hover:bg-accent/10 hover:text-accentDark disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          <ChevronLeft className="h-5 w-5" strokeWidth={2.4} />
+        </button>
+        <div className="grid flex-1 grid-cols-1 gap-4 py-1 md:grid-cols-2">
+          {visibleServices.map((service) => (
+            <div key={service.id} className="min-w-0">
+              <ServiceCard
+                service={service}
+                locationParams={locationParams}
+                recommendedByBeacon={service.id === recommendedServiceId}
+              />
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => changePage(1)}
+          disabled={!canScrollRight}
+          aria-label={`Next ${formatCategoryLabel(category)} services`}
+          className="surface-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/18 text-white transition hover:border-accent/45 hover:bg-accent/10 hover:text-accentDark disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          <ChevronRight className="h-5 w-5" strokeWidth={2.4} />
+        </button>
+      </div>
+    </>
   );
 }
 
