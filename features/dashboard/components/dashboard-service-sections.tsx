@@ -5,7 +5,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { categoryOrder } from "@/lib/constants/categories";
 import { buildLocationSearchParams } from "@/lib/location";
 import { scoreService } from "@/lib/services/ranking";
-import type { LocationContext, ServiceCategory, ServiceWithMeta } from "@/lib/types";
+import type {
+  LocationContext,
+  ServiceCategory,
+  ServiceWithMeta,
+} from "@/lib/types";
 import { formatCategoryLabel } from "@/lib/utils";
 import { ServiceCard } from "@/components/service-card";
 
@@ -14,19 +18,22 @@ const CAROUSEL_PAGE_SIZE = 2;
 function ServiceCarouselRow({
   services,
   locationParams,
-  category
+  category,
 }: {
   services: ServiceWithMeta[];
   locationParams: string;
   category: ServiceCategory;
 }) {
   const [pageIndex, setPageIndex] = useState(0);
-  const totalPages = Math.max(1, Math.ceil(services.length / CAROUSEL_PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(services.length / CAROUSEL_PAGE_SIZE),
+  );
   const canScrollLeft = pageIndex > 0;
   const canScrollRight = pageIndex < totalPages - 1;
   const visibleServices = services.slice(
     pageIndex * CAROUSEL_PAGE_SIZE,
-    pageIndex * CAROUSEL_PAGE_SIZE + CAROUSEL_PAGE_SIZE
+    pageIndex * CAROUSEL_PAGE_SIZE + CAROUSEL_PAGE_SIZE,
   );
   const recommendedServiceId =
     services.reduce<ServiceWithMeta | null>((best, service) => {
@@ -41,14 +48,19 @@ function ServiceCarouselRow({
   }, [totalPages]);
 
   function changePage(direction: -1 | 1) {
-    setPageIndex((current) => Math.min(Math.max(current + direction, 0), totalPages - 1));
+    setPageIndex((current) =>
+      Math.min(Math.max(current + direction, 0), totalPages - 1),
+    );
   }
 
   return (
     <>
       <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 md:hidden">
         {services.map((service) => (
-          <div key={service.id} className="w-[min(84vw,24rem)] shrink-0 snap-start">
+          <div
+            key={service.id}
+            className="w-[min(84vw,24rem)] shrink-0 snap-start"
+          >
             <ServiceCard
               service={service}
               locationParams={locationParams}
@@ -95,7 +107,7 @@ function ServiceCarouselRow({
 export function DashboardServiceSections({
   location,
   selectedCategory,
-  services
+  services,
 }: {
   location: LocationContext;
   selectedCategory: ServiceCategory | null;
@@ -108,15 +120,20 @@ export function DashboardServiceSections({
 
   const grouped = categoryOrder.map((category) => ({
     category,
-    services: visibleServices.filter((service) => service.category === category)
+    services: visibleServices.filter(
+      (service) => service.category === category,
+    ),
   }));
 
   if (visibleServices.length === 0) {
     return (
       <section className="surface-card rounded-4xl p-8 shadow-card">
-        <h2 className="font-display text-2xl font-semibold">No exact matches in this view</h2>
-        <p className="mt-3 max-w-2xl text-white/65">
-          Try switching categories, returning to all results, or using chat to broaden the search.
+        <h2 className="font-display text-2xl font-semibold">
+          No exact matches in this view
+        </h2>
+        <p className="text-theme-soft mt-3 max-w-2xl">
+          Try switching categories, returning to all results, or using chat to
+          broaden the search.
         </p>
       </section>
     );
@@ -129,12 +146,16 @@ export function DashboardServiceSections({
           <section key={group.category} className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-white/45">Category</p>
+                <p className="text-theme-faint text-xs uppercase tracking-[0.22em]">
+                  Category
+                </p>
                 <h2 className="font-display text-2xl font-semibold">
                   {formatCategoryLabel(group.category)}
                 </h2>
               </div>
-              <div className="text-sm text-white/55">{group.services.length} options</div>
+              <div className="text-theme-subtle text-sm">
+                {group.services.length} options
+              </div>
             </div>
             <ServiceCarouselRow
               category={group.category}
@@ -142,7 +163,7 @@ export function DashboardServiceSections({
               locationParams={locationParams}
             />
           </section>
-        ) : null
+        ) : null,
       )}
     </>
   );

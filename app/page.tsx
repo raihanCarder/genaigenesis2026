@@ -51,7 +51,7 @@ export default function HomePage() {
                     offset="0"
                   />
                 </feComponentTransfer>
-                <feFlood floodColor="#f5f1eb" result="logoColor" />
+                <feFlood floodColor="var(--ink)" result="logoColor" />
                 <feComposite in="logoColor" in2="sharpenedMask" operator="in" />
               </filter>
             </defs>

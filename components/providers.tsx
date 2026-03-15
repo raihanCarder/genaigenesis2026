@@ -3,6 +3,7 @@
 import { startTransition, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { ThemeProvider } from "next-themes";
 import { fetchJson } from "@/lib/api/fetch-json";
 import { ServiceWithMetaSchema } from "@/lib/types";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -115,5 +116,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setUser
   ]);
 
-  return children;
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={false}
+      disableTransitionOnChange
+    >
+      {children}
+    </ThemeProvider>
+  );
 }

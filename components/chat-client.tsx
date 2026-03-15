@@ -156,14 +156,14 @@ export function ChatClient({
     <div className="mx-auto grid h-full max-w-6xl gap-4 px-4 md:px-6 xl:grid-cols-[minmax(0,1.45fr)_18.5rem]">
       <section className="surface-card flex h-full min-h-0 flex-col overflow-hidden rounded-[1.75rem] shadow-card">
         <div className="flex h-full min-h-[38rem] flex-col md:min-h-0">
-          <div className="border-b border-white/10 px-4 py-4 sm:px-5">
-            <p className="text-xs uppercase tracking-[0.24em] text-white/42">Grounded chat</p>
+          <div className="border-b border-[color:var(--line)] px-4 py-4 sm:px-5">
+            <p className="text-theme-faint text-xs uppercase tracking-[0.24em]">Grounded chat</p>
             <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
               <h1 className="font-display text-[1.55rem] font-semibold tracking-tight sm:text-[1.8rem]">
                 Message Beacon
               </h1>
             </div>
-            <p className="mt-2.5 max-w-2xl text-sm leading-5 text-white/58">
+            <p className="text-theme-subtle mt-2.5 max-w-2xl text-sm leading-5">
               Each prompt resets the grounded reply and uses the full current nearby results.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -186,17 +186,17 @@ export function ChatClient({
 
           <div
             ref={conversationRef}
-            className="chat-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto bg-[#050505] px-4 py-4 sm:px-5"
+            className="bg-chat-canvas chat-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5"
           >
             {entries.length === 0 ? (
-              <div className="rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.02] px-4 py-5">
+              <div className="rounded-[1.5rem] border border-dashed border-[color:var(--line)] bg-[color:var(--surface-subtle)] px-4 py-5">
                 <div className="flex items-start gap-3">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-accent/15 bg-accent/8 text-accentDark">
                     <Sparkles className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="font-display text-xl font-semibold text-white">Start the conversation</p>
-                    <p className="mt-1.5 max-w-xl text-sm leading-5 text-white/58">
+                    <p className="font-display text-xl font-semibold">Start the conversation</p>
+                    <p className="text-theme-subtle mt-1.5 max-w-xl text-sm leading-5">
                       Ask about food, shelters, clinics, or a specific service.
                     </p>
                   </div>
@@ -219,11 +219,11 @@ export function ChatClient({
                     entry.role === "user" ? "order-first text-right" : "text-left"
                   )}
                 >
-                  <p className="mb-1.5 px-1 text-[10px] uppercase tracking-[0.2em] text-white/36">
+                  <p className="text-theme-faint mb-1.5 px-1 text-[10px] uppercase tracking-[0.2em]">
                     {entry.role === "user" ? "You" : "Beacon AI"}
                   </p>
                   {entry.role === "user" ? (
-                    <div className="rounded-[1.45rem] rounded-br-md border border-[#ece3d6] bg-[#f4efe7] px-4 py-3 text-sm leading-6 text-[#141110]">
+                    <div className="chat-user-bubble rounded-[1.45rem] rounded-br-md border px-4 py-3 text-sm leading-6">
                       {entry.content}
                     </div>
                   ) : (
@@ -241,19 +241,19 @@ export function ChatClient({
               <div className="flex items-end gap-3">
                 <ChatAvatar role="assistant" user={user} />
                 <div className="max-w-[16rem]">
-                  <p className="mb-1.5 px-1 text-[10px] uppercase tracking-[0.2em] text-white/36">
+                  <p className="text-theme-faint mb-1.5 px-1 text-[10px] uppercase tracking-[0.2em]">
                     Beacon AI
                   </p>
                   <div className="surface-card flex items-center gap-2.5 rounded-[1.45rem] rounded-bl-md px-4 py-3">
                     <LoaderCircle className="h-4 w-4 animate-spin text-accentDark" />
-                    <p className="text-sm text-white/62">Finding the best nearby option...</p>
+                    <p className="text-theme-subtle text-sm">Finding the best nearby option...</p>
                   </div>
                 </div>
               </div>
             ) : null}
           </div>
 
-          <div className="border-t border-white/10 bg-[#090909] px-4 py-3 sm:px-5">
+          <div className="bg-chat-footer border-t border-[color:var(--line)] px-4 py-3 sm:px-5">
             {chatError ? (
               <div className="error-panel mb-2 rounded-[1.1rem] px-3 py-2 text-sm">{chatError}</div>
             ) : null}
@@ -267,7 +267,7 @@ export function ChatClient({
                 void sendMessage(input);
               }}
             >
-              <div className="rounded-[1.45rem] border border-white/10 bg-[#0f0f0f] p-2 transition focus-within:border-white/30 focus-within:bg-white/[0.03]">
+              <div className="bg-chat-input rounded-[1.45rem] border border-[color:var(--line)] p-2 transition focus-within:border-[color:var(--line-strong)] focus-within:bg-[color:var(--surface-subtle)]">
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -279,11 +279,11 @@ export function ChatClient({
                     }
                   }}
                   rows={3}
-                  className="min-h-[4.75rem] w-full resize-none bg-transparent px-3 py-2.5 text-sm leading-6 text-white outline-none placeholder:text-white/32"
+                  className="min-h-[4.75rem] w-full resize-none bg-transparent px-3 py-2.5 text-sm leading-6 text-[color:var(--ink)] outline-none placeholder:text-[color:var(--ink-faint)]"
                   placeholder="Ask about food, showers, clinics, or a specific service."
                 />
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/8 px-2.5 pb-1 pt-2.5">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/38">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--line)] px-2.5 pb-1 pt-2.5">
+                  <p className="text-theme-faint text-[10px] uppercase tracking-[0.18em]">
                     {contextReady
                       ? `Grounded on ${activeServices.length} nearby services`
                       : "Loading nearby context"}
@@ -291,7 +291,7 @@ export function ChatClient({
                   <button
                     type="submit"
                     disabled={loading || !contextReady || input.trim().length === 0}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#f4efe7] px-3 py-2 text-xs font-medium text-[#13100f] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
+                    className="btn-primary inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-55"
                   >
                     <Send className="h-3.5 w-3.5" />
                     {loading ? "Thinking..." : "Send message"}
@@ -310,15 +310,15 @@ export function ChatClient({
               <Compass className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-white/42">Search context</p>
+              <p className="text-theme-faint text-xs uppercase tracking-[0.22em]">Search context</p>
               <h2 className="mt-1.5 font-display text-xl font-semibold">{activeLocation.label}</h2>
             </div>
           </div>
           <div className="mt-4 grid gap-2.5">
             <div className="surface-subtle rounded-[1.2rem] p-3.5">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/38">Services loaded</p>
-              <p className="mt-1.5 text-xl font-semibold text-white">{activeServices.length}</p>
-              <p className="mt-1 text-sm leading-5 text-white/55">Only this result set is used for replies.</p>
+              <p className="text-theme-faint text-xs uppercase tracking-[0.18em]">Services loaded</p>
+              <p className="mt-1.5 text-xl font-semibold">{activeServices.length}</p>
+              <p className="text-theme-subtle mt-1 text-sm leading-5">Only this result set is used for replies.</p>
             </div>
             {activeWarnings[0] ? (
               <div className="rounded-[1.2rem] border border-accent/25 bg-accent/10 p-3.5 text-sm leading-5 text-accentDark">
@@ -326,8 +326,8 @@ export function ChatClient({
               </div>
             ) : null}
             <div className="surface-subtle rounded-[1.2rem] p-3.5">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/38">How Beacon answers</p>
-              <div className="mt-2.5 grid gap-2.5 text-sm text-white/62">
+              <p className="text-theme-faint text-xs uppercase tracking-[0.18em]">How Beacon answers</p>
+              <div className="text-theme-subtle mt-2.5 grid gap-2.5 text-sm">
                 <div className="flex items-start gap-2.5">
                   <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-accentDark" />
                   <span>Uses only loaded services.</span>
@@ -346,7 +346,7 @@ export function ChatClient({
             <div>
               <h2 className="font-display text-xl font-semibold">Nearby options</h2>
             </div>
-            <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/45">
+            <span className="surface-subtle text-theme-faint rounded-full px-3 py-1 text-xs uppercase tracking-[0.18em]">
               Top {Math.min(4, activeServices.length)}
             </span>
           </div>
@@ -355,26 +355,26 @@ export function ChatClient({
               <Link
                 key={service.id}
                 href={`/services/${service.id}?${locationParams}`}
-                className="surface-subtle block rounded-[1.2rem] p-3.5 transition hover:border-white/18 hover:bg-white/[0.05]"
+                className="surface-subtle block rounded-[1.2rem] p-3.5 transition hover:border-[color:var(--line-strong)] hover:bg-[color:var(--surface-subtle-hover)]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[0.68rem] uppercase tracking-[0.2em] text-white/36">
+                    <p className="text-theme-faint text-[0.68rem] uppercase tracking-[0.2em]">
                       {formatCategoryLabel(service.category)}
                     </p>
-                    <p className="mt-1.5 text-sm font-semibold text-white">{service.name}</p>
+                    <p className="mt-1.5 text-sm font-semibold">{service.name}</p>
                   </div>
                   <span className="shrink-0 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-medium text-accentDark">
                     {formatDistance(service.distanceMeters)}
                   </span>
                 </div>
-                <p className="text-clamp-2 mt-2 text-sm leading-5 text-white/58">
+                <p className="text-theme-subtle text-clamp-2 mt-2 text-sm leading-5">
                   {service.description ?? service.address}
                 </p>
               </Link>
             ))}
             {activeServices.length === 0 && !contextLoading ? (
-              <div className="surface-subtle rounded-[1.2rem] p-3.5 text-sm text-white/55">
+              <div className="surface-subtle text-theme-subtle rounded-[1.2rem] p-3.5 text-sm">
                 No services loaded for this location yet.
               </div>
             ) : null}
@@ -394,7 +394,7 @@ function ChatAvatar({
 }) {
   if (role === "assistant") {
     return (
-      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-accent/20 bg-[#13110f] text-accentDark">
+      <div className="surface-subtle grid h-10 w-10 shrink-0 place-items-center rounded-2xl border-accent/20 text-accentDark">
         <Bot className="h-5 w-5" aria-hidden="true" />
         <span className="sr-only">Beacon AI</span>
       </div>
@@ -409,13 +409,13 @@ function ChatAvatar({
       <img
         src={user.photoURL}
         alt={`${avatarName} avatar`}
-        className="h-10 w-10 shrink-0 rounded-2xl border border-white/25 object-cover"
+        className="h-10 w-10 shrink-0 rounded-2xl border border-[color:var(--line-strong)] object-cover"
       />
     );
   }
 
   return (
-    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-white/65 bg-[#f4efe7] text-sm font-semibold text-[#141110]">
+    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-[color:var(--btn-primary-border)] bg-[color:var(--btn-primary-bg)] text-sm font-semibold text-[color:var(--btn-primary-text)]">
       {avatarInitial}
     </div>
   );
@@ -437,9 +437,9 @@ function AssistantReplyCard({
   const hasSingleResult = recommendations.length === 1;
 
   return (
-    <div className="surface-card overflow-hidden rounded-[1.45rem] rounded-bl-md border border-white/10">
-      <div className="border-b border-white/8 px-4 py-3">
-        <p className="text-sm leading-6 text-white/78">{response.summary}</p>
+    <div className="surface-card overflow-hidden rounded-[1.45rem] rounded-bl-md border border-[color:var(--line)]">
+      <div className="border-b border-[color:var(--line)] px-4 py-3">
+        <p className="text-theme-muted text-sm leading-6">{response.summary}</p>
         {response.verificationWarning ? (
           <div className="mt-3 rounded-[1rem] border border-accent/28 bg-accent/10 px-3 py-2.5 text-sm leading-5 text-accentDark">
             {response.verificationWarning}
@@ -452,22 +452,22 @@ function AssistantReplyCard({
           {recommendations.map(({ recommendation, service }) => (
             <div
               key={recommendation.serviceId}
-              className="surface-subtle rounded-[1.1rem] p-3 transition hover:border-white/16 hover:bg-white/[0.04]"
+              className="surface-subtle rounded-[1.1rem] p-3 transition hover:border-[color:var(--line-strong)] hover:bg-[color:var(--surface-subtle-hover)]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-[0.68rem] uppercase tracking-[0.2em] text-white/36">
+                  <p className="text-theme-faint text-[0.68rem] uppercase tracking-[0.2em]">
                     {formatCategoryLabel(service.category)}
                   </p>
-                  <p className="mt-1.5 text-sm font-semibold text-white">{service.name}</p>
+                  <p className="mt-1.5 text-sm font-semibold">{service.name}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-medium text-accentDark">
                   {formatDistance(service.distanceMeters)}
                 </span>
               </div>
-              <p className="mt-2 text-sm leading-5 text-white/58">{recommendation.reason}</p>
+              <p className="text-theme-subtle mt-2 text-sm leading-5">{recommendation.reason}</p>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                <p className="truncate text-xs uppercase tracking-[0.18em] text-white/34">
+                <p className="text-theme-faint truncate text-xs uppercase tracking-[0.18em]">
                   {service.address}
                 </p>
                 {hasSingleResult ? (
@@ -476,13 +476,13 @@ function AssistantReplyCard({
                       href={buildDirectionsUrl(service)}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-full bg-[#f4efe7] px-3 py-1.5 text-xs font-medium text-[#13100f] transition hover:bg-white"
+                      className="btn-primary rounded-full px-3 py-1.5 text-xs font-medium"
                     >
                       Directions
                     </a>
                     <Link
                       href={`/services/${service.id}?${locationParams}`}
-                      className="rounded-full border border-white/12 px-3 py-1.5 text-xs font-medium text-white transition hover:border-white/22 hover:bg-white/[0.05]"
+                      className="btn-secondary rounded-full px-3 py-1.5 text-xs font-medium"
                     >
                       View details
                     </Link>
@@ -490,7 +490,7 @@ function AssistantReplyCard({
                 ) : (
                   <Link
                     href={`/services/${service.id}?${locationParams}`}
-                    className="rounded-full border border-white/12 px-3 py-1.5 text-xs font-medium text-white transition hover:border-white/22 hover:bg-white/[0.05]"
+                    className="btn-secondary rounded-full px-3 py-1.5 text-xs font-medium"
                   >
                     View details
                   </Link>
@@ -502,12 +502,12 @@ function AssistantReplyCard({
       ) : null}
 
       {response.intent !== "irrelevant" && response.nextSteps.length > 0 ? (
-        <div className="border-t border-white/8 px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-white/38">Suggested next steps</p>
+        <div className="border-t border-[color:var(--line)] px-4 py-3">
+          <p className="text-theme-faint text-xs uppercase tracking-[0.2em]">Suggested next steps</p>
           <div className="mt-2.5 grid gap-2">
             {response.nextSteps.map((step, index) => (
-              <div key={step} className="flex items-start gap-2.5 text-sm leading-5 text-white/62">
-                <div className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/8 text-[10px] font-semibold text-white/72">
+              <div key={step} className="text-theme-subtle flex items-start gap-2.5 text-sm leading-5">
+                <div className="surface-subtle text-theme-soft mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-semibold">
                   {index + 1}
                 </div>
                 <span>{step}</span>

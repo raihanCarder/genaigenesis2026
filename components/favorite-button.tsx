@@ -51,7 +51,7 @@ export function FavoriteButton({
         type="button"
         disabled
         className={cn(
-          "btn-secondary rounded-full px-3 py-2 text-xs text-white/50",
+          "btn-secondary rounded-full px-3 py-2 text-xs",
           compact && "px-2.5 py-1.5"
         )}
       >

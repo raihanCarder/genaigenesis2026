@@ -72,7 +72,7 @@ export function NavBar({ items, className }: NavBarProps) {
         className
       )}
     >
-      <div className="flex items-center gap-2 rounded-full bg-[#0b0b0b]/88 p-1 shadow-card backdrop-blur-xl">
+      <div className="nav-shell flex items-center gap-2 rounded-full p-1 shadow-card">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.name;
@@ -86,16 +86,14 @@ export function NavBar({ items, className }: NavBarProps) {
               title={item.name}
               className={cn(
                 "relative flex min-w-[3.25rem] items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-colors md:min-w-0 md:px-6",
-                isActive
-                  ? "bg-white/[0.08] text-white"
-                  : "text-white/72 hover:text-white"
+                isActive ? "nav-link-active" : "nav-link"
               )}
             >
               {isMobile ? <Icon size={18} strokeWidth={2.5} /> : <span>{item.name}</span>}
               {isActive ? (
                 <motion.div
                   layoutId="lamp"
-                  className="absolute inset-0 -z-10 rounded-full bg-white/[0.08]"
+                  className="nav-lamp absolute inset-0 -z-10 rounded-full"
                   initial={false}
                   transition={{
                     type: "spring",
@@ -103,10 +101,10 @@ export function NavBar({ items, className }: NavBarProps) {
                     damping: 30
                   }}
                 >
-                  <div className="absolute -top-2 left-1/2 h-1 w-8 -translate-x-1/2 rounded-t-full bg-white">
-                    <div className="absolute -left-2 -top-2 h-6 w-12 rounded-full bg-white/20 blur-md" />
-                    <div className="absolute -top-1 h-6 w-8 rounded-full bg-white/20 blur-md" />
-                    <div className="absolute left-2 top-0 h-4 w-4 rounded-full bg-white/20 blur-sm" />
+                  <div className="nav-lamp-bar absolute -top-2 left-1/2 h-1 w-8 -translate-x-1/2 rounded-t-full">
+                    <div className="nav-lamp-glow absolute -left-2 -top-2 h-6 w-12 rounded-full blur-md" />
+                    <div className="nav-lamp-glow absolute -top-1 h-6 w-8 rounded-full blur-md" />
+                    <div className="nav-lamp-glow absolute left-2 top-0 h-4 w-4 rounded-full blur-sm" />
                   </div>
                 </motion.div>
               ) : null}

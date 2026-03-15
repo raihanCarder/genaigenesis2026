@@ -240,13 +240,13 @@ export function LocationEntry() {
     >
       <div className="grid gap-4">
         <label className="grid gap-2">
-          <span className="font-display text-base font-semibold tracking-[0.02em] text-white/82 md:text-lg">
+          <span className="text-theme-muted font-display text-base font-semibold tracking-[0.02em] md:text-lg">
             Location:
           </span>
           <div className="relative">
             <MapPin
               aria-hidden="true"
-              className="pointer-events-none absolute left-5 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-black/45"
+              className="pointer-events-none absolute left-5 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-[color:var(--input-placeholder)]"
             />
             <input
               value={query}
@@ -305,16 +305,16 @@ export function LocationEntry() {
               autoComplete="off"
               aria-expanded={showSuggestions}
               aria-controls="location-suggestion-list"
-              className="w-full rounded-3xl border border-black bg-white py-4 pl-14 pr-5 text-black outline-none transition placeholder:text-black/45 focus:border-black"
+              className="input-surface w-full rounded-3xl py-4 pl-14 pr-5 outline-none transition"
             />
             {showSuggestions ? (
               <div
                 id="location-suggestion-list"
                 role="listbox"
-                className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 grid overflow-hidden rounded-3xl border border-black bg-white shadow-card"
+                className="theme-modal absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 grid overflow-hidden rounded-3xl shadow-card"
               >
                 {loadingSuggestions && suggestions.length === 0 ? (
-                  <p className="px-4 py-3 text-sm text-black/50">
+                  <p className="theme-modal-muted px-4 py-3 text-sm">
                     Finding likely locations...
                   </p>
                 ) : null}
@@ -344,15 +344,15 @@ export function LocationEntry() {
                       }}
                       className={`grid gap-1 px-4 py-3 text-left transition ${
                         highlighted
-                          ? "bg-[#f7efe4]"
-                          : "bg-white hover:bg-black/5"
+                          ? "bg-[rgba(242,140,40,0.12)]"
+                          : "hover:bg-[color:var(--surface-subtle)]"
                       }`}
                     >
-                      <span className="text-sm font-medium text-black">
+                      <span className="text-sm font-medium">
                         {suggestion.primaryText}
                       </span>
                       {suggestion.secondaryText ? (
-                        <span className="text-sm text-black/55">
+                        <span className="theme-modal-muted text-sm">
                           {suggestion.secondaryText}
                         </span>
                       ) : null}
