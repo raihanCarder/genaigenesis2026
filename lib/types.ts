@@ -67,6 +67,8 @@ export const RoadmapStepSchema = z.object({
   reason: z.string()
 });
 
+export const RoadmapSectionKeySchema = z.enum(["thisWeek", "thisMonth", "longerTerm"]);
+
 export const RoadmapResponseSchema = z.object({
   situationSummary: z.string(),
   thisWeek: z.array(z.object({ serviceId: z.string().optional(), reason: z.string() })),
@@ -77,6 +79,30 @@ export const RoadmapResponseSchema = z.object({
   thisWeek_summary: z.string().optional(),
   thisMonth_summary: z.string().optional(),
   longerTerm_summary: z.string().optional(),
+});
+
+export const RoadmapViewStepSchema = z.object({
+  id: z.string(),
+  reason: z.string(),
+  serviceId: z.string().optional(),
+  service: z.preprocess(
+    (value) => (value === undefined ? null : value),
+    ServiceWithMetaSchema.nullable()
+  )
+});
+
+export const RoadmapViewSectionSchema = z.object({
+  key: RoadmapSectionKeySchema,
+  label: z.string(),
+  summary: z.string().optional(),
+  steps: z.array(RoadmapViewStepSchema)
+});
+
+export const RoadmapViewSchema = z.object({
+  situationSummary: z.string(),
+  sections: z.array(RoadmapViewSectionSchema),
+  notes: z.array(z.string()).default([]),
+  verificationWarnings: z.array(z.string()).default([])
 });
 export const FavoriteSchema = z.object({
   id: z.string(),
@@ -136,6 +162,23 @@ export const DashboardPayloadSchema = z.object({
   warnings: z.array(z.string())
 });
 
+const ConstraintValueSchema = z.union([z.boolean(), z.string(), z.number(), z.null()]);
+
+export const RoadmapRequestPayloadSchema = z.object({
+  needs: z.array(z.string().trim().min(1)).min(1),
+  constraints: z.record(ConstraintValueSchema).optional(),
+  location: LocationContextSchema.pick({
+    latitude: true,
+    longitude: true,
+    label: true,
+    placeId: true,
+    city: true,
+    region: true,
+    country: true
+  }),
+  services: ServiceWithMetaSchema.array()
+});
+
 export type ServiceCategory = z.infer<typeof ServiceCategorySchema>;
 export type SourceType = z.infer<typeof SourceTypeSchema>;
 export type FreshnessState = z.infer<typeof FreshnessStateSchema>;
@@ -143,6 +186,10 @@ export type Service = z.infer<typeof ServiceSchema>;
 export type ChatIntent = z.infer<typeof ChatIntentSchema>;
 export type ChatResponse = z.infer<typeof ChatResponseSchema>;
 export type RoadmapResponse = z.infer<typeof RoadmapResponseSchema>;
+export type RoadmapSectionKey = z.infer<typeof RoadmapSectionKeySchema>;
+export type RoadmapViewStep = z.infer<typeof RoadmapViewStepSchema>;
+export type RoadmapViewSection = z.infer<typeof RoadmapViewSectionSchema>;
+export type RoadmapView = z.infer<typeof RoadmapViewSchema>;
 export type Favorite = z.infer<typeof FavoriteSchema>;
 export type SessionUser = z.infer<typeof SessionUserSchema>;
 export type LocationContext = z.infer<typeof LocationContextSchema>;
@@ -160,9 +207,4 @@ export type ChatRequestPayload = {
   warnings?: string[];
 };
 
-export type RoadmapRequestPayload = {
-  needs: string[];
-  constraints?: Record<string, boolean | string | number | null | undefined>;
-  location: Pick<LocationContext, "latitude" | "longitude">;
-  services: ServiceWithMeta[];
-};
+export type RoadmapRequestPayload = z.infer<typeof RoadmapRequestPayloadSchema>;
