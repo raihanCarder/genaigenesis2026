@@ -321,7 +321,7 @@ export async function generateRoadmap(rawInput: string): Promise<RoadmapResponse
       // Step A: Extract directly from the raw string
       async (input: string) => {
         console.log("🔍 Running Analyzer Node...");
-        return await analyzer.invoke(`Analyze this crisis background and extract facts: ${input}`);
+        return await analyzer.invoke(`Analyze this crisis background and extract facts: ${input}. If the input is gibberish, empty, or lacks any mention of a crisis (housing, food, jobs), set all fields to 'N/A'. Most importantly, if you cannot identify a city or specific need, set immediateBarriers to ['INSUFFICIENT_DATA'] and urgencyLevel to 'low'`);
       },
 
       // Step B: Pipe the profile into the Agent
@@ -360,7 +360,8 @@ export async function generateRoadmap(rawInput: string): Promise<RoadmapResponse
           "notes": ["Tips on safety/ID/organization"],
           "verificationWarnings": ["Warnings about hours/verification"]
         }
-        CRITICAL: Raw JSON only. No markdown. Fill every array.`;
+        CRITICAL: Raw JSON only. No markdown. Fill every array.
+        "CRITICAL GUARDRAIL: If the input profile contains 'INSUFFICIENT_DATA' in the barriers list, DO NOT use any tools. Instead, return a JSON response where the situationSummary is a polite request for more details (specifically asking for their city and current crisis). Set thisWeek to a single step explaining why more info is needed to provide safe, local resources. Set all other arrays to empty."`;
         
         const agent = createReactAgent({
           llm: agentLlm,
