@@ -1,22 +1,14 @@
 "use client";
 
 import React from "react";
-import { cva } from "class-variance-authority";
-import { type HTMLMotionProps, motion } from "motion/react";
+import { type HTMLMotionProps, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-const bouncingDotsVariant = cva("flex items-center justify-center gap-2", {
-  variants: {
-    messagePlacement: {
-      bottom: "flex-col",
-      right: "flex-row",
-      left: "flex-row-reverse",
-    },
-  },
-  defaultVariants: {
-    messagePlacement: "bottom",
-  },
-});
+const messagePlacementClasses = {
+  bottom: "flex-col",
+  right: "flex-row",
+  left: "flex-row-reverse",
+} as const;
 
 export interface BouncingDotsProps {
   dots?: number;
@@ -32,7 +24,12 @@ export function BouncingDots({
   ...props
 }: HTMLMotionProps<"div"> & BouncingDotsProps) {
   return (
-    <div className={cn(bouncingDotsVariant({ messagePlacement }))}>
+    <div
+      className={cn(
+        "flex items-center justify-center gap-2",
+        messagePlacementClasses[messagePlacement]
+      )}
+    >
       <div className={cn("flex items-center justify-center gap-2")}>
         {Array(dots)
           .fill(undefined)

@@ -49,11 +49,17 @@ export const ChatRecommendationSchema = z.object({
   reason: z.string()
 });
 
+export const ChatIntentSchema = z.enum(["relevant", "irrelevant"]);
+
 export const ChatResponseSchema = z.object({
+  intent: ChatIntentSchema,
   summary: z.string(),
   recommendedServices: z.array(ChatRecommendationSchema),
   nextSteps: z.array(z.string()),
-  verificationWarning: z.string().optional()
+  verificationWarning: z.preprocess(
+    (value) => (value === null ? undefined : value),
+    z.string().optional()
+  )
 });
 
 export const RoadmapStepSchema = z.object({
@@ -132,6 +138,7 @@ export type ServiceCategory = z.infer<typeof ServiceCategorySchema>;
 export type SourceType = z.infer<typeof SourceTypeSchema>;
 export type FreshnessState = z.infer<typeof FreshnessStateSchema>;
 export type Service = z.infer<typeof ServiceSchema>;
+export type ChatIntent = z.infer<typeof ChatIntentSchema>;
 export type ChatResponse = z.infer<typeof ChatResponseSchema>;
 export type RoadmapResponse = z.infer<typeof RoadmapResponseSchema>;
 export type Favorite = z.infer<typeof FavoriteSchema>;
@@ -145,9 +152,10 @@ export type ServiceWithMeta = z.infer<typeof ServiceWithMetaSchema>;
 
 export type ChatRequestPayload = {
   message: string;
-  location: Pick<LocationContext, "latitude" | "longitude">;
+  location: LocationContext;
   selectedCategory?: ServiceCategory;
   services: ServiceWithMeta[];
+  warnings?: string[];
 };
 
 export type RoadmapRequestPayload = {
