@@ -53,15 +53,15 @@ export function DashboardClient({
               </div>
 
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-white/45">
+                <p className="text-theme-faint text-xs uppercase tracking-[0.22em]">
                   Heads up
                 </p>
-                <h2 className="mt-2 font-display text-2xl font-semibold text-white">
+                <h2 className="mt-2 font-display text-2xl font-semibold">
                   Before you go
                 </h2>
               </div>
 
-              <p className="max-w-sm text-sm leading-6 text-white/62">
+              <p className="text-theme-subtle max-w-sm text-sm leading-6">
                 A few details still need manual confirmation before you make
                 the trip.
               </p>
@@ -74,7 +74,7 @@ export function DashboardClient({
                   className="surface-card flex items-start gap-3 rounded-3xl p-4"
                 >
                   <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-accent shadow-[0_0_18px_rgba(242,140,40,0.65)]" />
-                  <p className="text-sm leading-6 text-white/72">{warning}</p>
+                  <p className="text-theme-soft text-sm leading-6">{warning}</p>
                 </div>
               ))}
             </div>
@@ -93,7 +93,7 @@ export function DashboardClient({
           aria-live="polite"
           className="glass-panel rounded-4xl p-5 shadow-card"
         >
-          <div className="surface-card flex min-h-[10rem] items-center justify-center rounded-[1.75rem] px-6 py-8 text-center text-sm text-white/58">
+          <div className="surface-card text-theme-subtle flex min-h-[10rem] items-center justify-center rounded-[1.75rem] px-6 py-8 text-center text-sm">
             <BouncingDots
               message="Loading nearby services..."
               messagePlacement="right"

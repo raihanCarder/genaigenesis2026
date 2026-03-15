@@ -9,7 +9,7 @@ export default function HomePage() {
             <h1 className="mt-4 font-display text-5xl font-semibold leading-[0.95] md:text-7xl">
               Find nearby support, then plan toward stability.
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-white/70">
+            <p className="text-theme-soft mt-6 max-w-2xl text-lg">
               Browse essential services without signing in. Use grounded chat
               for local questions. Sign in only when you want a longer-term
               roadmap or saved places.
@@ -41,7 +41,7 @@ export default function HomePage() {
                     offset="0"
                   />
                 </feComponentTransfer>
-                <feFlood floodColor="#f5f1eb" result="logoColor" />
+                <feFlood floodColor="var(--ink)" result="logoColor" />
                 <feComposite in="logoColor" in2="sharpenedMask" operator="in" />
               </filter>
             </defs>

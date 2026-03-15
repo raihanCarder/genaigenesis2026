@@ -51,7 +51,7 @@ function ServiceCarouselRow({
         onClick={() => changePage(-1)}
         disabled={!canScrollLeft}
         aria-label={`Previous ${formatCategoryLabel(category)} services`}
-        className="surface-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/18 text-white transition hover:border-accent/45 hover:bg-accent/10 hover:text-accentDark disabled:cursor-not-allowed disabled:opacity-30"
+        className="surface-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--line-strong)] transition hover:border-accent/45 hover:bg-accent/10 hover:text-accentDark disabled:cursor-not-allowed disabled:opacity-30"
       >
         <ChevronLeft className="h-5 w-5" strokeWidth={2.4} />
       </button>
@@ -71,7 +71,7 @@ function ServiceCarouselRow({
         onClick={() => changePage(1)}
         disabled={!canScrollRight}
         aria-label={`Next ${formatCategoryLabel(category)} services`}
-        className="surface-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/18 text-white transition hover:border-accent/45 hover:bg-accent/10 hover:text-accentDark disabled:cursor-not-allowed disabled:opacity-30"
+        className="surface-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--line-strong)] transition hover:border-accent/45 hover:bg-accent/10 hover:text-accentDark disabled:cursor-not-allowed disabled:opacity-30"
       >
         <ChevronRight className="h-5 w-5" strokeWidth={2.4} />
       </button>
@@ -102,7 +102,7 @@ export function DashboardServiceSections({
     return (
       <section className="surface-card rounded-4xl p-8 shadow-card">
         <h2 className="font-display text-2xl font-semibold">No exact matches in this view</h2>
-        <p className="mt-3 max-w-2xl text-white/65">
+        <p className="text-theme-soft mt-3 max-w-2xl">
           Try switching categories, returning to all results, or using chat to broaden the search.
         </p>
       </section>
@@ -116,12 +116,12 @@ export function DashboardServiceSections({
           <section key={group.category} className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-white/45">Category</p>
+                <p className="text-theme-faint text-xs uppercase tracking-[0.22em]">Category</p>
                 <h2 className="font-display text-2xl font-semibold">
                   {formatCategoryLabel(group.category)}
                 </h2>
               </div>
-              <div className="text-sm text-white/55">{group.services.length} options</div>
+              <div className="text-theme-subtle text-sm">{group.services.length} options</div>
             </div>
             <ServiceCarouselRow
               category={group.category}

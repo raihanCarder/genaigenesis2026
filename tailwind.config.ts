@@ -15,15 +15,15 @@ const config: Config = {
         sans: ['"IBM Plex Sans"', '"Avenir Next"', '"Segoe UI"', "sans-serif"]
       },
       colors: {
-        canvas: "#080808",
-        ink: "#080808",
-        accent: "#f28c28",
-        accentDark: "#ffbe86",
-        slate: "#c9d4db",
-        moss: "#99b29f"
+        canvas: "var(--canvas)",
+        ink: "var(--ink)",
+        accent: "var(--accent)",
+        accentDark: "var(--accent-dark)",
+        slate: "var(--slate)",
+        moss: "var(--moss)"
       },
       boxShadow: {
-        card: "0 24px 60px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.04)"
+        card: "var(--shadow-card)"
       },
       borderRadius: {
         "4xl": "2rem"

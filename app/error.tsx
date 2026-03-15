@@ -9,9 +9,9 @@ export default function GlobalError({
 }) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-16 md:px-6">
-      <p className="text-sm uppercase tracking-[0.22em] text-white/45">Something broke</p>
+      <p className="text-theme-faint text-sm uppercase tracking-[0.22em]">Something broke</p>
       <h1 className="font-display text-4xl font-semibold">We hit an unexpected error.</h1>
-      <p className="text-white/65">{error.message}</p>
+      <p className="text-theme-soft">{error.message}</p>
       <button
         type="button"
         onClick={reset}

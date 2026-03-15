@@ -2,15 +2,113 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+html.dark {
+  color-scheme: dark;
   --canvas: #080808;
-  --canvas-strong: #080808;
+  --canvas-strong: #11100f;
   --ink: #f5f1eb;
-  --muted: #b6ada4;
+  --ink-muted: rgba(245, 241, 235, 0.82);
+  --ink-soft: rgba(245, 241, 235, 0.72);
+  --ink-subtle: rgba(245, 241, 235, 0.62);
+  --ink-faint: rgba(245, 241, 235, 0.45);
   --accent: #f28c28;
   --accent-dark: #ffbe86;
-  --moss: #99b29f;
   --slate: #c9d4db;
+  --moss: #99b29f;
+  --surface: rgba(8, 8, 8, 0.96);
+  --surface-border: rgba(255, 255, 255, 0.12);
+  --surface-subtle: rgba(255, 255, 255, 0.03);
+  --surface-subtle-hover: rgba(255, 255, 255, 0.06);
+  --surface-subtle-border: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --nav-shell: rgba(11, 11, 11, 0.88);
+  --nav-active: rgba(255, 255, 255, 0.08);
+  --nav-glow: rgba(255, 255, 255, 0.2);
+  --input-bg: rgba(255, 255, 255, 0.98);
+  --input-text: #15110f;
+  --input-border: rgba(255, 255, 255, 0.2);
+  --input-placeholder: rgba(21, 17, 15, 0.55);
+  --btn-primary-bg: #f5f1eb;
+  --btn-primary-bg-hover: #ffffff;
+  --btn-primary-text: #15110f;
+  --btn-primary-border: rgba(255, 255, 255, 0.18);
+  --btn-secondary-bg: rgba(255, 255, 255, 0.04);
+  --btn-secondary-bg-hover: rgba(255, 255, 255, 0.1);
+  --btn-secondary-text: #f5f1eb;
+  --btn-secondary-border: rgba(255, 255, 255, 0.18);
+  --chat-bg: #050505;
+  --chat-footer-bg: #090909;
+  --chat-input-bg: #0f0f0f;
+  --chat-user-bubble-bg: #f4efe7;
+  --chat-user-bubble-border: #ece3d6;
+  --chat-user-bubble-text: #141110;
+  --modal-bg: #fbf7f1;
+  --modal-text: #141110;
+  --modal-muted: rgba(20, 17, 16, 0.65);
+  --modal-faint: rgba(20, 17, 16, 0.45);
+  --modal-border: rgba(20, 17, 16, 0.1);
+  --modal-chip: rgba(20, 17, 16, 0.05);
+  --modal-overlay: rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 24px 60px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --grid-line: rgba(255, 255, 255, 0.05);
+  --hero-radial: radial-gradient(circle at top right, rgba(255, 255, 255, 0.08), transparent 34%);
+  --logo-filter: none;
+}
+
+html.light {
+  color-scheme: light;
+  --canvas: #f7f2e8;
+  --canvas-strong: #fffaf3;
+  --ink: #17120f;
+  --ink-muted: rgba(23, 18, 15, 0.84);
+  --ink-soft: rgba(23, 18, 15, 0.74);
+  --ink-subtle: rgba(23, 18, 15, 0.62);
+  --ink-faint: rgba(23, 18, 15, 0.46);
+  --accent: #cf6c12;
+  --accent-dark: #a14d0a;
+  --slate: #536270;
+  --moss: #54725b;
+  --surface: rgba(255, 255, 255, 0.84);
+  --surface-border: rgba(23, 18, 15, 0.1);
+  --surface-subtle: rgba(23, 18, 15, 0.04);
+  --surface-subtle-hover: rgba(23, 18, 15, 0.07);
+  --surface-subtle-border: rgba(23, 18, 15, 0.08);
+  --line: rgba(23, 18, 15, 0.1);
+  --line-strong: rgba(23, 18, 15, 0.16);
+  --nav-shell: rgba(255, 255, 255, 0.82);
+  --nav-active: rgba(23, 18, 15, 0.08);
+  --nav-glow: rgba(23, 18, 15, 0.14);
+  --input-bg: rgba(255, 255, 255, 0.96);
+  --input-text: #17120f;
+  --input-border: rgba(23, 18, 15, 0.12);
+  --input-placeholder: rgba(23, 18, 15, 0.46);
+  --btn-primary-bg: #17120f;
+  --btn-primary-bg-hover: #2c221d;
+  --btn-primary-text: #f7f2e8;
+  --btn-primary-border: rgba(23, 18, 15, 0.08);
+  --btn-secondary-bg: rgba(255, 255, 255, 0.72);
+  --btn-secondary-bg-hover: rgba(255, 255, 255, 0.92);
+  --btn-secondary-text: #17120f;
+  --btn-secondary-border: rgba(23, 18, 15, 0.12);
+  --chat-bg: rgba(247, 243, 236, 0.9);
+  --chat-footer-bg: rgba(244, 239, 231, 0.72);
+  --chat-input-bg: rgba(255, 255, 255, 0.96);
+  --chat-user-bubble-bg: #17120f;
+  --chat-user-bubble-border: #17120f;
+  --chat-user-bubble-text: #f7f2e8;
+  --modal-bg: rgba(255, 255, 255, 0.96);
+  --modal-text: #17120f;
+  --modal-muted: rgba(23, 18, 15, 0.66);
+  --modal-faint: rgba(23, 18, 15, 0.46);
+  --modal-border: rgba(23, 18, 15, 0.1);
+  --modal-chip: rgba(23, 18, 15, 0.05);
+  --modal-overlay: rgba(23, 18, 15, 0.35);
+  --shadow-card: 0 18px 48px rgba(82, 61, 39, 0.12), 0 0 0 1px rgba(23, 18, 15, 0.05);
+  --grid-line: rgba(23, 18, 15, 0.05);
+  --hero-radial: radial-gradient(circle at top right, rgba(242, 140, 40, 0.12), transparent 34%);
+  --logo-filter: invert(1) brightness(0.16) saturate(0.7);
 }
 
 * {
@@ -25,7 +123,9 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
-  background-color: var(--canvas);
+  background:
+    radial-gradient(circle at top, var(--canvas-strong), transparent 42%),
+    linear-gradient(180deg, var(--canvas-strong), var(--canvas));
   color: var(--ink);
 }
 
@@ -40,51 +140,60 @@ textarea {
   font: inherit;
 }
 
-.glass-panel {
-  background: rgba(8, 8, 8, 0.96);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.grid-lines {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 32px 32px;
-}
-
 .font-display {
   font-family: "Space Grotesk", "Avenir Next", "Trebuchet MS", sans-serif;
 }
 
+.text-theme-muted {
+  color: var(--ink-muted);
+}
+
+.text-theme-soft {
+  color: var(--ink-soft);
+}
+
+.text-theme-subtle {
+  color: var(--ink-subtle);
+}
+
+.text-theme-faint {
+  color: var(--ink-faint);
+}
+
+.glass-panel {
+  background: var(--surface);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--surface-border);
+}
+
 .surface-card {
-  background: rgba(8, 8, 8, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
 }
 
 .surface-subtle {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-subtle);
+  border: 1px solid var(--surface-subtle-border);
 }
 
 .input-surface {
-  background: rgba(255, 255, 255, 0.98);
-  color: #15110f;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--input-bg);
+  color: var(--input-text);
+  border: 1px solid var(--input-border);
 }
 
 .input-surface::placeholder {
-  color: rgba(21, 17, 15, 0.55);
+  color: var(--input-placeholder);
 }
 
 .input-surface:focus {
-  border-color: rgba(242, 140, 40, 0.55);
+  border-color: color-mix(in srgb, var(--accent) 55%, white 5%);
 }
 
 .btn-primary {
-  background: #f5f1eb;
-  color: #15110f;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
   transition:
     background-color 160ms ease,
     border-color 160ms ease,
@@ -92,13 +201,13 @@ textarea {
 }
 
 .btn-primary:hover {
-  background: #ffffff;
+  background: var(--btn-primary-bg-hover);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.04);
-  color: #f5f1eb;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+  border: 1px solid var(--btn-secondary-border);
   transition:
     background-color 160ms ease,
     border-color 160ms ease,
@@ -106,8 +215,8 @@ textarea {
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.28);
+  background: var(--btn-secondary-bg-hover);
+  border-color: var(--line-strong);
 }
 
 .btn-primary:disabled,
@@ -120,6 +229,95 @@ textarea {
   background: rgba(92, 34, 20, 0.45);
   border: 1px solid rgba(255, 190, 134, 0.3);
   color: #ffd4af;
+}
+
+html.light .error-panel {
+  background: rgba(207, 108, 18, 0.08);
+  border-color: rgba(161, 77, 10, 0.18);
+  color: #7b3807;
+}
+
+.grid-lines {
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.nav-shell,
+.topbar-pill {
+  background: var(--nav-shell);
+  border: 1px solid var(--surface-border);
+  backdrop-filter: blur(18px);
+}
+
+.nav-link {
+  color: var(--ink-soft);
+}
+
+.nav-link:hover {
+  color: var(--ink);
+}
+
+.nav-link-active {
+  background: var(--nav-active);
+  color: var(--ink);
+}
+
+.nav-lamp {
+  background: var(--nav-active);
+}
+
+.nav-lamp-bar {
+  background: var(--ink);
+}
+
+.nav-lamp-glow {
+  background: var(--nav-glow);
+}
+
+.bg-chat-canvas {
+  background: var(--chat-bg);
+}
+
+.bg-chat-footer {
+  background: var(--chat-footer-bg);
+}
+
+.bg-chat-input {
+  background: var(--chat-input-bg);
+}
+
+.chat-user-bubble {
+  background: var(--chat-user-bubble-bg);
+  border-color: var(--chat-user-bubble-border);
+  color: var(--chat-user-bubble-text);
+}
+
+.theme-overlay {
+  background: var(--modal-overlay);
+}
+
+.theme-modal {
+  background: var(--modal-bg);
+  color: var(--modal-text);
+  border: 1px solid var(--modal-border);
+}
+
+.theme-modal-chip {
+  background: var(--modal-chip);
+}
+
+.theme-modal-muted {
+  color: var(--modal-muted);
+}
+
+.theme-modal-faint {
+  color: var(--modal-faint);
+}
+
+.logo-tone {
+  filter: var(--logo-filter);
 }
 
 .text-clamp-2 {
@@ -145,7 +343,7 @@ textarea {
 
 .chat-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  scrollbar-color: var(--line-strong) transparent;
 }
 
 .chat-scrollbar::-webkit-scrollbar {
@@ -157,13 +355,13 @@ textarea {
 }
 
 .chat-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--line-strong);
   border: 2px solid transparent;
   border-radius: 999px;
   background-clip: padding-box;
 }
 
 .chat-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: color-mix(in srgb, var(--line-strong) 75%, var(--ink) 25%);
   background-clip: padding-box;
 }
