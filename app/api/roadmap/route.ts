@@ -1,24 +1,35 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { generateRoadmap } from "@/lib/adapters/gemini";
-import { requireUserFromRequest } from "@/lib/auth/server";
-import { RoadmapResponseSchema, ServiceWithMetaSchema, type RoadmapRequestPayload } from "@/lib/types";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    //await requireUserFromRequest(request); #Commented out for testing purposes
-    const body = (await request.json()) as Partial<RoadmapRequestPayload>;
-    if (!body.location || !Array.isArray(body.needs) || !Array.isArray(body.services)) {
-      return NextResponse.json({ error: "Invalid roadmap payload." }, { status: 400 });
+    const { message } = await req.json();
+    const supabase = await createSupabaseServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const services = ServiceWithMetaSchema.array().parse(body.services.slice(0, 12));
-    const response = await generateRoadmap({
-    });
-    return NextResponse.json(RoadmapResponseSchema.parse(response));
-  } catch (error) {
-    const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500;
-    return NextResponse.json(
-      { error: status === 401 ? "Authentication required." : error instanceof Error ? error.message : "Unable to generate roadmap." },
-      { status }
-    );
+    const roadmapData = await generateRoadmap(message);
+
+    const { data, error: dbError } = await supabase
+      .from("roadmaps")
+      .insert([
+        {
+          user_id: user.id,   
+          raw_input: message,
+          data: roadmapData,
+        },
+      ])
+      .select()
+      .single();
+
+    if (dbError) throw dbError;
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error("API Error:", error.message);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
