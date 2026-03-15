@@ -58,15 +58,11 @@ function toWorldPoint(location: GlobePin["location"]) {
   return {
     x: cosLat * Math.cos(lng),
     y: -cosLat * Math.sin(lng),
-    z: Math.sin(lat)
+    z: Math.sin(lat),
   };
 }
 
-function projectPin(
-  pin: GlobePin,
-  phi: number,
-  theta: number
-): ProjectedPin {
+function projectPin(pin: GlobePin, phi: number, theta: number): ProjectedPin {
   const point = toWorldPoint(pin.location);
   const cosPhi = Math.cos(phi);
   const sinPhi = Math.sin(phi);
@@ -87,7 +83,7 @@ function projectPin(
     ...pin,
     left: 50 + localX * 40,
     top: 50 - localY * 40,
-    visible: localZ > 0
+    visible: localZ > 0,
   };
 }
 
@@ -95,7 +91,7 @@ export function Globe({
   className,
   config,
   pins = [],
-  autoRotateSpeed = 0.005
+  autoRotateSpeed = 0.005,
 }: {
   className?: string;
   config?: GlobeConfig;
@@ -258,15 +254,10 @@ export function Globe({
             className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-[calc(100%+0.15rem)]"
             style={{
               left: `${pin.left}%`,
-              top: `${pin.top}%`
+              top: `${pin.top}%`,
             }}
           >
             <div className="flex flex-col items-center gap-1">
-              {pin.label ? (
-                <div className="max-w-[10rem] truncate rounded-full border border-white/20 bg-black/70 px-2.5 py-1 text-[10px] font-medium text-white">
-                  {pin.label}
-                </div>
-              ) : null}
               <span className="block h-3 w-3 rounded-full border border-white/70 bg-accent" />
             </div>
           </div>
