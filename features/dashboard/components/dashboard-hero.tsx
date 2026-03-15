@@ -191,17 +191,17 @@ export function DashboardHero({
     : "Nearby essentials right now";
 
   return (
-    <section className="glass-panel relative overflow-hidden rounded-[2rem] px-6 py-8 text-white shadow-card md:px-8 md:py-9">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_34%)]" />
+    <section className="glass-panel relative overflow-hidden rounded-[2rem] px-6 py-8 shadow-card md:px-8 md:py-9">
+      <div className="pointer-events-none absolute inset-0 [background:var(--hero-radial)]" />
 
       <div className="relative grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-stretch md:gap-10">
         <div className="max-w-xl space-y-5 md:space-y-6">
           <div className="space-y-4">
-            <p className="text-sm uppercase tracking-[0.24em] text-white/60">Location</p>
+            <p className="text-theme-subtle text-sm uppercase tracking-[0.24em]">Location</p>
             <h1 className="font-display text-4xl font-semibold leading-tight">
               {location.label}
             </h1>
-            <p className="max-w-xl text-base text-white/78">
+            <p className="text-theme-muted max-w-xl text-base">
               Start with nearby essentials, then use our chat for grounded
               recommendations. Stability planning stays available once you sign
               in.
@@ -227,13 +227,13 @@ export function DashboardHero({
           <div className="surface-card rounded-[1.75rem] p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-md">
-                <p className="text-xs uppercase tracking-[0.22em] text-white/45">
+                <p className="text-theme-faint text-xs uppercase tracking-[0.22em]">
                   {servicesHeading}
                 </p>
                 <h2 className="mt-2 font-display text-2xl font-semibold">
                   Start with the strongest nearby options
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-white/60">
+                <p className="text-theme-subtle mt-2 text-sm leading-6">
                   Pulled from the current dashboard search and prioritized for
                   fresh verification, open status, and proximity.
                 </p>
@@ -249,7 +249,7 @@ export function DashboardHero({
             </div>
 
             {loading ? (
-              <div className="mt-5 flex min-h-[11rem] items-center justify-center rounded-[1.5rem] border border-white/10 bg-white/[0.03] px-6 py-8 text-center text-sm text-white/58">
+              <div className="surface-subtle text-theme-subtle mt-5 flex min-h-[11rem] items-center justify-center rounded-[1.5rem] px-6 py-8 text-center text-sm">
                 <BouncingDots
                   message="Pulling the strongest nearby services..."
                   messagePlacement="bottom"
@@ -262,7 +262,7 @@ export function DashboardHero({
                   <Link
                     key={service.id}
                     href={`/services/${service.id}?${detailParams}`}
-                    className="group rounded-[1.5rem] border border-white/10 bg-white/[0.03] px-4 py-3 transition hover:border-accent/35 hover:bg-white/[0.06]"
+                    className="surface-subtle group rounded-[1.5rem] px-4 py-3 transition hover:border-accent/35 hover:bg-[color:var(--surface-subtle-hover)]"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
@@ -276,15 +276,15 @@ export function DashboardHero({
                             </span>
                           ) : null}
                         </div>
-                        <p className="mt-2 text-sm font-semibold text-white transition group-hover:text-accentDark">
+                        <p className="mt-2 text-sm font-semibold transition group-hover:text-accentDark">
                           {service.name}
                         </p>
-                        <p className="mt-1 text-sm leading-6 text-white/60">
+                        <p className="text-theme-subtle mt-1 text-sm leading-6">
                           {formatWalkTime(service.distanceMeters)} •{" "}
                           {formatServiceTiming(service)}
                         </p>
                       </div>
-                      <span className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-xs font-medium text-white/72">
+                      <span className="surface-subtle text-theme-soft shrink-0 rounded-full px-3 py-1 text-xs font-medium">
                         Details
                       </span>
                     </div>
@@ -292,7 +292,7 @@ export function DashboardHero({
                 ))}
               </div>
             ) : (
-              <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/[0.03] px-5 py-4 text-sm text-white/58">
+              <div className="surface-subtle text-theme-subtle mt-5 rounded-[1.5rem] px-5 py-4 text-sm">
                 No nearby matches are loaded for this view yet. Try the full
                 results list below or open grounded chat to broaden the search.
               </div>
@@ -301,19 +301,19 @@ export function DashboardHero({
         </div>
 
         <div className="surface-card relative overflow-hidden rounded-[1.75rem] md:h-full">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.28),rgba(255,255,255,0))]" />
+          <div className="pointer-events-none absolute inset-0 [background:var(--hero-radial)]" />
 
           <div className="relative flex h-full min-h-[340px] flex-col justify-between gap-4 p-5 md:min-h-[360px] md:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-white/45">
+                <p className="text-theme-faint text-xs uppercase tracking-[0.22em]">
                   World pin
                 </p>
                 <h2 className="font-display text-3xl font-semibold leading-tight">
                   {location.label}
                 </h2>
               </div>
-              <div className="rounded-full border border-white/12 bg-white/[0.08] px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/70">
+              <div className="surface-subtle text-theme-soft rounded-full px-3 py-1 text-xs uppercase tracking-[0.18em]">
                 Selected location
               </div>
             </div>

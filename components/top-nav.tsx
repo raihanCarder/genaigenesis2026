@@ -10,6 +10,7 @@ import {
   MessageSquareText,
 } from "lucide-react";
 import { SignInButton } from "@/components/sign-in-button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NavBar } from "@/components/ui/tubelight-navbar";
 import { buildLocationSearchParams } from "@/lib/location";
 import { useAppStore } from "@/store/app-store";
@@ -48,7 +49,7 @@ export function TopNav() {
         <div className="mx-auto flex max-w-6xl items-start justify-between gap-4 px-4 pt-4 md:px-6 md:pt-5">
           <Link
             href="/"
-            className="flex items-center gap-3 rounded-full bg-[#0b0b0b]/88 px-3 py-2 shadow-card backdrop-blur-xl transition"
+            className="topbar-pill flex items-center gap-3 rounded-full px-3 py-2 shadow-card transition"
           >
             <div className="relative h-10 w-10 overflow-hidden rounded-2xl md:h-11 md:w-11">
               <Image
@@ -56,7 +57,7 @@ export function TopNav() {
                 alt="Beacon logo"
                 fill
                 sizes="44px"
-                className="object-contain"
+                className="logo-tone object-contain"
                 priority
               />
             </div>
@@ -64,13 +65,14 @@ export function TopNav() {
               <div className="font-display text-base font-semibold tracking-tight">
                 beacon
               </div>
-              <div className="text-xs text-white/55">
+              <div className="text-theme-faint text-xs">
                 Find help. Build stability.
               </div>
             </div>
           </Link>
-          <div className="shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             <SignInButton compact />
+            <ThemeToggle />
           </div>
         </div>
       </div>

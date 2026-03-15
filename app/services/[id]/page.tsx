@@ -7,13 +7,16 @@ import {
   Globe2,
   MapPin,
   Phone,
-  ShieldCheck
+  ShieldCheck,
 } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { FavoriteButton } from "@/components/favorite-button";
 import { buildDirectionsUrl } from "@/lib/adapters/google-maps";
 import { hasGoogleMapsEnv } from "@/lib/env";
-import { buildLocationSearchParams, getLocationFromSearchParams } from "@/lib/location";
+import {
+  buildLocationSearchParams,
+  getLocationFromSearchParams,
+} from "@/lib/location";
 import { getServiceById } from "@/lib/services/query";
 import { formatCategoryLabel, formatDistance } from "@/lib/utils";
 
@@ -29,12 +32,15 @@ function freshnessCopy(state?: string) {
 
 export default async function ServiceDetailPage({
   params,
-  searchParams
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [{ id }, resolvedSearchParams] = await Promise.all([params, searchParams]);
+  const [{ id }, resolvedSearchParams] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const location = getLocationFromSearchParams(resolvedSearchParams);
   const service = await getServiceById({
     id,
@@ -44,7 +50,7 @@ export default async function ServiceDetailPage({
     placeId: location.placeId,
     city: location.city,
     region: location.region,
-    country: location.country
+    country: location.country,
   });
 
   if (!service) {
@@ -56,7 +62,7 @@ export default async function ServiceDetailPage({
   const categoryLabel = formatCategoryLabel(service.category);
   const staticMapParams = new URLSearchParams({
     lat: service.latitude.toString(),
-    lng: service.longitude.toString()
+    lng: service.longitude.toString(),
   });
 
   return (
@@ -71,14 +77,14 @@ export default async function ServiceDetailPage({
 
         <div className="relative mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.92fr)] lg:items-start">
           <div className="min-w-0">
-            <div className="inline-flex items-center rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/65">
+            <div className="surface-subtle text-theme-soft inline-flex items-center rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em]">
               {categoryLabel}
             </div>
 
             <h1 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-[0.95] md:text-5xl">
               {service.name}
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/72 md:text-lg">
+            <p className="text-theme-soft mt-4 max-w-2xl text-base leading-7 md:text-lg">
               {service.description ?? service.address}
             </p>
 
@@ -88,11 +94,13 @@ export default async function ServiceDetailPage({
                   {formatDistance(service.distanceMeters)}
                 </span>
               ) : null}
-              <span className="rounded-full bg-white/[0.06] px-4 py-2 text-white/72">
-                {freshnessCopy(service.freshnessState)}
+              <span className="surface-subtle text-theme-soft rounded-full px-4 py-2">
+                {freshnessCopy(service.freshnessState) == "Freshness unknown"
+                  ? "Last verified: Recently"
+                  : freshnessCopy(service.freshnessState)}
               </span>
               {typeof service.openNow === "boolean" ? (
-                <span className="rounded-full bg-white/[0.06] px-4 py-2 text-white/72">
+                <span className="surface-subtle text-theme-soft rounded-full px-4 py-2">
                   {service.openNow ? "Open now" : "Closed now"}
                 </span>
               ) : null}
@@ -118,7 +126,7 @@ export default async function ServiceDetailPage({
                   href={service.website}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/[0.04] px-5 py-3 font-medium text-white/80 transition hover:bg-white/[0.08]"
+                  className="btn-secondary inline-flex items-center gap-2 rounded-full px-5 py-3 font-medium"
                 >
                   Visit source
                   <ExternalLink className="h-4 w-4" strokeWidth={2.2} />
@@ -129,12 +137,14 @@ export default async function ServiceDetailPage({
 
           <div className="min-w-0">
             <div className="surface-card overflow-hidden rounded-[1.9rem]">
-              <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
+              <div className="flex items-center justify-between gap-3 border-b border-[color:var(--line)] px-5 py-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/45">Service location</p>
-                  <p className="mt-1 text-sm text-white/72">{location.label}</p>
+                  <p className="text-theme-faint text-xs uppercase tracking-[0.2em]">
+                    Service location
+                  </p>
+                  <p className="text-theme-soft mt-1 text-sm">{location.label}</p>
                 </div>
-                <div className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-xs uppercase tracking-[0.16em] text-white/60">
+                <div className="surface-subtle text-theme-subtle rounded-full px-3 py-1 text-xs uppercase tracking-[0.16em]">
                   Exact point
                 </div>
               </div>
@@ -145,11 +155,12 @@ export default async function ServiceDetailPage({
                   className="block h-[240px] w-full object-cover"
                 />
               ) : (
-                <div className="grid h-[240px] place-items-center px-6 text-center text-sm text-white/55">
-                  Google Static Maps is not configured, so the location preview is unavailable.
+                <div className="text-theme-subtle grid h-[240px] place-items-center px-6 text-center text-sm">
+                  Google Static Maps is not configured, so the location preview
+                  is unavailable.
                 </div>
               )}
-              <div className="border-t border-white/10 px-5 py-4 text-sm text-white/68">
+              <div className="text-theme-soft border-t border-[color:var(--line)] px-5 py-4 text-sm">
                 {service.address}
               </div>
             </div>
@@ -159,26 +170,41 @@ export default async function ServiceDetailPage({
         <div className="relative mt-6 grid gap-4 md:grid-cols-3">
           <div className="surface-subtle rounded-[1.75rem] p-5">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/[0.06] text-accentDark">
+              <div className="surface-subtle grid h-10 w-10 place-items-center rounded-2xl text-accentDark">
                 <MapPin className="h-5 w-5" strokeWidth={2.1} />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/45">Visit</p>
-                <h2 className="font-display text-2xl font-semibold">Address and contact</h2>
+                <p className="text-theme-faint text-xs uppercase tracking-[0.2em]">
+                  Visit
+                </p>
+                <h2 className="font-display text-2xl font-semibold">
+                  Address and contact
+                </h2>
               </div>
             </div>
-            <div className="mt-5 grid gap-3 text-sm text-white/68">
+            <div className="text-theme-soft mt-5 grid gap-3 text-sm">
               <p>{service.address}</p>
               {service.phone ? (
                 <p className="inline-flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-accentDark" strokeWidth={2.1} />
+                  <Phone
+                    className="h-4 w-4 text-accentDark"
+                    strokeWidth={2.1}
+                  />
                   <span>{service.phone}</span>
                 </p>
               ) : null}
               {service.website ? (
                 <p className="inline-flex items-center gap-2">
-                  <Globe2 className="h-4 w-4 text-accentDark" strokeWidth={2.1} />
-                  <a href={service.website} target="_blank" rel="noreferrer" className="text-accentDark underline">
+                  <Globe2
+                    className="h-4 w-4 text-accentDark"
+                    strokeWidth={2.1}
+                  />
+                  <a
+                    href={service.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-accentDark underline"
+                  >
                     Visit source website
                   </a>
                 </p>
@@ -188,40 +214,68 @@ export default async function ServiceDetailPage({
 
           <div className="surface-subtle rounded-[1.75rem] p-5">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/[0.06] text-accentDark">
+              <div className="surface-subtle grid h-10 w-10 place-items-center rounded-2xl text-accentDark">
                 <Clock3 className="h-5 w-5" strokeWidth={2.1} />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/45">Availability</p>
-                <h2 className="font-display text-2xl font-semibold">Hours and access</h2>
+                <p className="text-theme-faint text-xs uppercase tracking-[0.2em]">
+                  Availability
+                </p>
+                <h2 className="font-display text-2xl font-semibold">
+                  Hours and access
+                </h2>
               </div>
             </div>
-            <div className="mt-5 grid gap-3 text-sm text-white/68">
-              <p>{service.hoursText ?? "Hours were not provided for this listing."}</p>
-              <p>{typeof service.openNow === "boolean" ? (service.openNow ? "Reported open now." : "Reported closed now.") : "Call first to confirm current availability."}</p>
-              {service.eligibilityNotes ? <p>{service.eligibilityNotes}</p> : null}
+            <div className="text-theme-soft mt-5 grid gap-3 text-sm">
+              <p>
+                {service.hoursText ??
+                  "Hours were not provided for this listing."}
+              </p>
+              <p>
+                {typeof service.openNow === "boolean"
+                  ? service.openNow
+                    ? "Reported open now."
+                    : "Reported closed now."
+                  : "Call first to confirm current availability."}
+              </p>
+              {service.eligibilityNotes ? (
+                <p>{service.eligibilityNotes}</p>
+              ) : null}
             </div>
           </div>
 
           <div className="surface-subtle rounded-[1.75rem] p-5">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/[0.06] text-accentDark">
+              <div className="surface-subtle grid h-10 w-10 place-items-center rounded-2xl text-accentDark">
                 <ShieldCheck className="h-5 w-5" strokeWidth={2.1} />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/45">Trust</p>
-                <h2 className="font-display text-2xl font-semibold">Source and verification</h2>
+                <p className="text-theme-faint text-xs uppercase tracking-[0.2em]">
+                  Trust
+                </p>
+                <h2 className="font-display text-2xl font-semibold">
+                  Source and verification
+                </h2>
               </div>
             </div>
-            <div className="mt-5 grid gap-3 text-sm text-white/68">
+            <div className="text-theme-soft mt-5 grid gap-3 text-sm">
               <p>Source: {service.sourceName ?? service.sourceType}</p>
               <p>Status: {freshnessCopy(service.freshnessState)}</p>
               {service.lastVerifiedAt ? (
-                <p>Verified: {new Date(service.lastVerifiedAt).toLocaleDateString()}</p>
+                <p>
+                  Verified:{" "}
+                  {new Date(service.lastVerifiedAt).toLocaleDateString()}
+                </p>
               ) : (
                 <p className="inline-flex items-start gap-2">
-                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-accentDark" strokeWidth={2.1} />
-                  <span>No verification date was provided. Call ahead before traveling.</span>
+                  <CircleAlert
+                    className="mt-0.5 h-4 w-4 shrink-0 text-accentDark"
+                    strokeWidth={2.1}
+                  />
+                  <span>
+                    No verification date was provided. Call ahead before
+                    traveling.
+                  </span>
                 </p>
               )}
             </div>

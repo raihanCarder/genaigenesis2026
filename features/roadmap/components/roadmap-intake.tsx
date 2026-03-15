@@ -20,9 +20,9 @@ export function RoadmapIntake({
 }) {
   return (
     <section className="glass-panel rounded-4xl p-6 shadow-card">
-      <p className="text-xs uppercase tracking-[0.22em] text-white/45">Roadmap intake</p>
+      <p className="text-theme-faint text-xs uppercase tracking-[0.22em]">Roadmap intake</p>
       <h1 className="font-display text-3xl font-semibold">Build a longer-term stability plan</h1>
-      <p className="mt-3 text-white/65">
+      <p className="text-theme-soft mt-3">
         Start with the needs that matter most over the next few weeks.
       </p>
 

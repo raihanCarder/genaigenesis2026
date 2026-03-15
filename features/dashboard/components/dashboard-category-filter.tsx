@@ -15,7 +15,7 @@ export function DashboardCategoryFilter({
     <section id="nearby-services" className="glass-panel scroll-mt-24 rounded-4xl p-5 shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-white/45">Browse by need</p>
+          <p className="text-theme-faint text-xs uppercase tracking-[0.22em]">Browse by need</p>
           <h2 className="font-display text-2xl font-semibold">Essential services near you</h2>
         </div>
         <button
