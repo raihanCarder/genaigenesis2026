@@ -63,13 +63,15 @@ export const RoadmapStepSchema = z.object({
 
 export const RoadmapResponseSchema = z.object({
   situationSummary: z.string(),
-  thisWeek: z.array(RoadmapStepSchema),
-  thisMonth: z.array(RoadmapStepSchema),
-  longerTerm: z.array(RoadmapStepSchema),
-  notes: z.array(z.string()),
-  verificationWarnings: z.array(z.string()).optional()
+  thisWeek: z.array(z.object({ serviceId: z.string().optional(), reason: z.string() })),
+  thisMonth: z.array(z.object({ serviceId: z.string().optional(), reason: z.string() })),
+  longerTerm: z.array(z.object({ serviceId: z.string().optional(), reason: z.string() })),
+  notes: z.array(z.string()).default([]),
+  verificationWarnings: z.array(z.string()).default([]),
+  thisWeek_summary: z.string().optional(),
+  thisMonth_summary: z.string().optional(),
+  longerTerm_summary: z.string().optional(),
 });
-
 export const FavoriteSchema = z.object({
   id: z.string(),
   userId: z.string(),

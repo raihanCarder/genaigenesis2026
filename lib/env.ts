@@ -8,7 +8,9 @@ const serverEnvSchema = z.object({
   GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
-  FIREBASE_PRIVATE_KEY: z.string().optional()
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
+  GOOGLE_SEARCH_API_KEY: z.string().min(1),
+  GOOGLE_SEARCH_ENGINE_ID: z.string().min(1),
 });
 
 const clientEnvSchema = z.object({
@@ -23,7 +25,6 @@ export const clientEnv = clientEnvSchema.parse({
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 });
-
 export const hasGoogleMapsEnv = Boolean(serverEnv.GOOGLE_MAPS_API_KEY);
 export const braveSearchApiKey = serverEnv.BRAVE_SEARCH_API_KEY;
 export const hasBraveSearchEnv = Boolean(braveSearchApiKey);
