@@ -11,15 +11,17 @@ function freshnessCopy(state?: ServiceWithMeta["freshnessState"]) {
   if (state === "stale") {
     return "Verify before traveling";
   }
-  return "Freshness unknown";
+  return "Last verified: recently";
 }
 
 export function ServiceCard({
   service,
   locationParams,
+  recommendedByBeacon = false,
 }: {
   service: ServiceWithMeta;
   locationParams?: string;
+  recommendedByBeacon?: boolean;
 }) {
   return (
     <article className="surface-card flex h-[26rem] min-w-0 flex-col overflow-hidden rounded-4xl p-5 shadow-card">
@@ -40,6 +42,11 @@ export function ServiceCard({
         </div>
       </div>
       <div className="mt-4 flex min-w-0 flex-wrap gap-2 text-xs">
+        {recommendedByBeacon ? (
+          <span className="rounded-full border border-accent/35 bg-accent/10 px-3 py-1.5 font-medium text-accentDark">
+            Recommended by Beacon
+          </span>
+        ) : null}
         <span className="rounded-full bg-accent/10 px-3 py-1.5 font-medium text-accentDark">
           {formatDistance(service.distanceMeters)}
         </span>
@@ -56,11 +63,12 @@ export function ServiceCard({
         ) : null}
       </div>
       <div className="mt-4 grid min-h-[4.75rem] gap-2 overflow-hidden text-sm text-white/60">
-        <p className="text-clamp-2 break-words">{service.address}</p>
         {service.hoursText ? (
           <p className="text-clamp-2 break-words">{service.hoursText}</p>
         ) : null}
-        {service.phone ? <p className="text-clamp-2 break-words">{service.phone}</p> : null}
+        {service.phone ? (
+          <p className="text-clamp-2 break-words">{service.phone}</p>
+        ) : null}
       </div>
       <div className="mt-auto flex flex-wrap gap-3 pt-5">
         <Link
