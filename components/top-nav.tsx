@@ -1,56 +1,56 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import {
+  Heart,
+  House,
+  LayoutDashboard,
+  Map,
+  MessageSquareText
+} from "lucide-react";
 import { SignInButton } from "@/components/sign-in-button";
-import { cn } from "@/lib/utils";
+import { NavBar } from "@/components/ui/tubelight-navbar";
 import { useAppStore } from "@/store/app-store";
 
-const publicLinks = [
-  { href: "/", label: "Home" },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/chat", label: "Chat" }
+const publicItems = [
+  { name: "Home", url: "/", icon: House },
+  { name: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { name: "Chat", url: "/chat", icon: MessageSquareText }
 ];
 
-const privateLinks = [
-  { href: "/plan", label: "Plan" },
-  { href: "/saved", label: "Saved" }
+const privateItems = [
+  { name: "Plan", url: "/plan", icon: Map },
+  { name: "Saved", url: "/saved", icon: Heart }
 ];
 
 export function TopNav() {
-  const pathname = usePathname();
   const user = useAppStore((state) => state.user);
-  const links = user ? [...publicLinks, ...privateLinks] : publicLinks;
+  const items = user ? [...publicItems, ...privateItems] : publicItems;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-black/5 bg-[#fbf7f1]/90 backdrop-blur-lg">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-accent text-lg font-bold text-white shadow-card">
-            GN
+    <>
+      <div className="fixed inset-x-0 top-0 z-40">
+        <div className="mx-auto flex max-w-6xl items-start justify-between gap-4 px-4 pt-4 md:px-6 md:pt-5">
+          <Link
+            href="/"
+            className="flex items-center gap-3 rounded-full bg-[#0b0b0b]/88 px-3 py-2 shadow-card backdrop-blur-xl transition"
+          >
+            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-sm font-bold text-black md:h-11 md:w-11 md:text-base">
+              GN
+            </div>
+            <div className="hidden lg:block">
+              <div className="font-display text-base font-semibold tracking-tight">
+                Genesis Navigator
+              </div>
+              <div className="text-xs text-white/55">Toronto stability support map</div>
+            </div>
+          </Link>
+          <div className="shrink-0">
+            <SignInButton compact />
           </div>
-          <div>
-            <div className="font-display text-lg font-semibold tracking-tight">Genesis Navigator</div>
-            <div className="text-xs text-black/55">Toronto stability support map</div>
-          </div>
-        </Link>
-        <nav className="hidden items-center gap-2 md:flex">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm transition",
-                pathname === link.href ? "bg-ink text-white" : "bg-black/5 hover:bg-black/10"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        <SignInButton />
+        </div>
       </div>
-    </header>
+      <NavBar items={items} />
+    </>
   );
 }
-

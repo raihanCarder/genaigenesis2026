@@ -130,7 +130,7 @@ export function SignInButton({ compact = false }: { compact?: boolean }) {
         type="button"
         disabled
         className={cn(
-          "rounded-full border border-black/10 bg-black/5 px-4 py-2 text-sm text-black/40",
+          "btn-secondary rounded-full px-4 py-2 text-sm text-white/45",
           compact && "px-3 py-1.5 text-xs"
         )}
       >
@@ -143,26 +143,26 @@ export function SignInButton({ compact = false }: { compact?: boolean }) {
     return (
       <>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => openDialog("sign-in")}
-            disabled={pending}
-            className={cn(
-              "rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-black/5 disabled:opacity-60",
-              compact && "px-3 py-1.5 text-xs"
-            )}
-          >
+            <button
+              type="button"
+              onClick={() => openDialog("sign-in")}
+              disabled={pending}
+              className={cn(
+                "rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-[#ece7df] disabled:opacity-60",
+                compact && "px-3 py-1.5 text-xs"
+              )}
+            >
             {pending ? "Working..." : "Log in"}
           </button>
-          <button
-            type="button"
-            onClick={() => openDialog("sign-up")}
-            disabled={pending}
-            className={cn(
-              "rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-accentDark disabled:opacity-60",
-              compact && "px-3 py-1.5 text-xs"
-            )}
-          >
+            <button
+              type="button"
+              onClick={() => openDialog("sign-up")}
+              disabled={pending}
+              className={cn(
+                "rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-white hover:text-black disabled:opacity-60",
+                compact && "px-3 py-1.5 text-xs"
+              )}
+            >
             {pending ? "Working..." : "Sign up"}
           </button>
         </div>
@@ -177,7 +177,10 @@ export function SignInButton({ compact = false }: { compact?: boolean }) {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.22em] text-black/45">Account</p>
-                  <h2 id="auth-dialog-title" className="mt-2 font-display text-3xl font-semibold">
+                  <h2
+                    id="auth-dialog-title"
+                    className="mt-2 font-display text-3xl font-semibold text-black"
+                  >
                     {mode === "sign-in" ? "Log in" : "Create account"}
                   </h2>
                   <p className="mt-2 text-sm text-black/65">
@@ -229,7 +232,7 @@ export function SignInButton({ compact = false }: { compact?: boolean }) {
                     autoComplete="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-accent"
+                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-accent"
                     placeholder="you@example.com"
                     disabled={pending}
                   />
@@ -242,7 +245,7 @@ export function SignInButton({ compact = false }: { compact?: boolean }) {
                     autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-accent"
+                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-accent"
                     placeholder="At least 6 characters"
                     disabled={pending}
                   />
@@ -256,7 +259,7 @@ export function SignInButton({ compact = false }: { compact?: boolean }) {
                       autoComplete="new-password"
                       value={confirmPassword}
                       onChange={(event) => setConfirmPassword(event.target.value)}
-                      className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-accent"
+                      className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-accent"
                       placeholder="Repeat your password"
                       disabled={pending}
                     />
@@ -300,7 +303,7 @@ export function SignInButton({ compact = false }: { compact?: boolean }) {
       onClick={handleClick}
       disabled={pending}
       className={cn(
-        "rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-accentDark disabled:opacity-60",
+        "btn-primary rounded-full px-4 py-2 text-sm font-medium disabled:opacity-60",
         compact && "px-3 py-1.5 text-xs"
       )}
     >

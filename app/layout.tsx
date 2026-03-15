@@ -15,7 +15,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Providers>
           <div className="min-h-screen">
             <TopNav />
-            <main>{children}</main>
+            <main className="min-h-screen pb-28 pt-24 md:pb-10 md:pt-28">{children}</main>
           </div>
         </Providers>
       </body>

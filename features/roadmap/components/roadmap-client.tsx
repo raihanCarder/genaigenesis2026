@@ -44,7 +44,7 @@ export function RoadmapClient({ initialLocation }: { initialLocation: LocationCo
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 md:px-6">
-      <div className="grid gap-6 md:grid-cols-[1fr,1.1fr]">
+      <div className="grid gap-6 md:grid-cols-[1fr_1.1fr]">
         <RoadmapIntake
           needs={needs}
           loading={loading}

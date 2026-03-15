@@ -53,7 +53,7 @@ export function FavoriteButton({
         type="button"
         disabled
         className={cn(
-          "rounded-full border border-black/10 bg-black/5 px-3 py-2 text-xs text-black/50",
+          "btn-secondary rounded-full px-3 py-2 text-xs text-white/50",
           compact && "px-2.5 py-1.5"
         )}
       >
@@ -68,7 +68,7 @@ export function FavoriteButton({
       onClick={handleToggle}
       disabled={pending}
       className={cn(
-        "rounded-full border border-accent/25 bg-white px-3 py-2 text-xs font-medium text-accentDark transition hover:border-accent hover:bg-accent/10 disabled:opacity-60",
+        "rounded-full border border-accent/35 bg-accent/10 px-3 py-2 text-xs font-medium text-accentDark transition hover:bg-accent/15 disabled:opacity-60",
         compact && "px-2.5 py-1.5"
       )}
     >

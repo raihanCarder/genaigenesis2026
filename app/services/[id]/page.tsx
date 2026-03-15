@@ -41,36 +41,36 @@ export default async function ServiceDetailPage({
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
       <section className="glass-panel rounded-4xl p-6 shadow-card">
-        <p className="text-xs uppercase tracking-[0.22em] text-black/45">{service.category}</p>
+        <p className="text-xs uppercase tracking-[0.22em] text-white/45">{service.category}</p>
         <h1 className="mt-2 font-display text-4xl font-semibold">{service.name}</h1>
-        <p className="mt-4 text-lg text-black/68">{service.description ?? service.address}</p>
+        <p className="mt-4 text-lg text-white/68">{service.description ?? service.address}</p>
 
-        <div className="mt-6 grid gap-4 rounded-[1.75rem] bg-white p-5 md:grid-cols-2">
-          <div className="space-y-2 text-sm text-black/65">
-            <p><span className="font-semibold text-black">Address:</span> {service.address}</p>
+        <div className="surface-card mt-6 grid gap-4 rounded-[1.75rem] p-5 md:grid-cols-2">
+          <div className="space-y-2 text-sm text-white/65">
+            <p><span className="font-semibold text-white">Address:</span> {service.address}</p>
             {service.hoursText ? (
-              <p><span className="font-semibold text-black">Hours:</span> {service.hoursText}</p>
+              <p><span className="font-semibold text-white">Hours:</span> {service.hoursText}</p>
             ) : null}
             {service.phone ? (
-              <p><span className="font-semibold text-black">Phone:</span> {service.phone}</p>
+              <p><span className="font-semibold text-white">Phone:</span> {service.phone}</p>
             ) : null}
             {service.website ? (
               <p>
-                <span className="font-semibold text-black">Website:</span>{" "}
+                <span className="font-semibold text-white">Website:</span>{" "}
                 <a href={service.website} target="_blank" rel="noreferrer" className="text-accentDark underline">
                   Visit source
                 </a>
               </p>
             ) : null}
           </div>
-          <div className="space-y-2 text-sm text-black/65">
-            <p><span className="font-semibold text-black">Freshness:</span> {service.freshnessState ?? "unknown"}</p>
-            <p><span className="font-semibold text-black">Source:</span> {service.sourceName ?? service.sourceType}</p>
+          <div className="space-y-2 text-sm text-white/65">
+            <p><span className="font-semibold text-white">Freshness:</span> {service.freshnessState ?? "unknown"}</p>
+            <p><span className="font-semibold text-white">Source:</span> {service.sourceName ?? service.sourceType}</p>
             {service.lastVerifiedAt ? (
-              <p><span className="font-semibold text-black">Verified:</span> {new Date(service.lastVerifiedAt).toLocaleDateString()}</p>
+              <p><span className="font-semibold text-white">Verified:</span> {new Date(service.lastVerifiedAt).toLocaleDateString()}</p>
             ) : null}
             {service.eligibilityNotes ? (
-              <p><span className="font-semibold text-black">Notes:</span> {service.eligibilityNotes}</p>
+              <p><span className="font-semibold text-white">Notes:</span> {service.eligibilityNotes}</p>
             ) : null}
           </div>
         </div>
@@ -80,13 +80,13 @@ export default async function ServiceDetailPage({
             href={buildDirectionsUrl(service)}
             target="_blank"
             rel="noreferrer"
-            className="rounded-full bg-ink px-5 py-3 font-medium text-white transition hover:bg-accentDark"
+            className="btn-primary rounded-full px-5 py-3 font-medium"
           >
             Open directions
           </a>
           <Link
             href={`/chat?${locationParams}`}
-            className="rounded-full border border-black/10 px-5 py-3 font-medium transition hover:border-accent/30 hover:bg-accent/5"
+            className="btn-secondary rounded-full px-5 py-3 font-medium"
           >
             Ask grounded chat
           </Link>
@@ -96,4 +96,3 @@ export default async function ServiceDetailPage({
     </div>
   );
 }
-

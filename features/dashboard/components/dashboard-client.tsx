@@ -29,15 +29,15 @@ export function DashboardClient({ initialLocation }: { initialLocation: Location
       />
 
       {loading ? (
-        <section className="rounded-4xl border border-black/5 bg-white p-8 text-center shadow-card">
+        <section className="surface-card rounded-4xl p-8 text-center text-white/72 shadow-card">
           Loading Toronto services...
         </section>
       ) : null}
 
       {error ? (
-        <section className="rounded-4xl border border-red-200 bg-red-50 p-6 shadow-card">
-          <h2 className="font-display text-2xl font-semibold text-red-900">Unable to load services</h2>
-          <p className="mt-3 text-sm text-red-800">{error}</p>
+        <section className="error-panel rounded-4xl p-6 shadow-card">
+          <h2 className="font-display text-2xl font-semibold">Unable to load services</h2>
+          <p className="mt-3 text-sm">{error}</p>
         </section>
       ) : null}
 
@@ -53,4 +53,3 @@ export function DashboardClient({ initialLocation }: { initialLocation: Location
     </div>
   );
 }
-

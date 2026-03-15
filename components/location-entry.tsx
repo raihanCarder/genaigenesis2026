@@ -92,40 +92,39 @@ export function LocationEntry() {
     <form onSubmit={handleSubmit} className="glass-panel rounded-4xl p-6 shadow-card">
       <div className="grid gap-4">
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-black/65">Enter a location</span>
+          <span className="text-sm font-medium text-white/65">Enter a location</span>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Downtown Toronto"
-            className="rounded-3xl border border-black/10 bg-white px-5 py-4 outline-none transition focus:border-accent"
+            className="input-surface rounded-3xl px-5 py-4 outline-none transition"
           />
         </label>
         <div className="flex flex-col gap-3 md:flex-row">
           <button
             type="submit"
             disabled={pending}
-            className="rounded-full bg-ink px-5 py-3 font-medium text-white transition hover:bg-accentDark disabled:opacity-60"
+            className="btn-primary rounded-full px-5 py-3 font-medium disabled:opacity-60"
           >
             {pending ? "Finding services..." : "Open dashboard"}
           </button>
           <button
             type="button"
             onClick={handleCurrentLocation}
-            className="rounded-full border border-black/10 bg-white px-5 py-3 font-medium transition hover:border-accent/40 hover:bg-accent/5"
+            className="btn-secondary rounded-full px-5 py-3 font-medium"
           >
             Use my location
           </button>
           <button
             type="button"
             onClick={handleDemoLocation}
-            className="rounded-full border border-black/10 bg-black/5 px-5 py-3 font-medium transition hover:bg-black/10"
+            className="btn-secondary rounded-full px-5 py-3 font-medium"
           >
             Load Toronto demo
           </button>
         </div>
-        {error ? <p className="text-sm text-red-700">{error}</p> : null}
+        {error ? <p className="text-sm text-accentDark">{error}</p> : null}
       </div>
     </form>
   );
 }
-

@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --canvas: #f5f0e8;
-  --canvas-strong: #efe2cf;
-  --ink: #1e1b18;
-  --muted: #60584e;
-  --accent: #dd6b20;
-  --accent-dark: #8c3b1c;
-  --moss: #54705d;
-  --slate: #3b4b57;
+  --canvas: #080808;
+  --canvas-strong: #080808;
+  --ink: #f5f1eb;
+  --muted: #b6ada4;
+  --accent: #f28c28;
+  --accent-dark: #ffbe86;
+  --moss: #99b29f;
+  --slate: #c9d4db;
 }
 
 * {
@@ -25,10 +25,7 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(221, 107, 32, 0.16), transparent 32%),
-    radial-gradient(circle at top right, rgba(84, 112, 93, 0.14), transparent 28%),
-    linear-gradient(180deg, #fbf7f1 0%, var(--canvas) 42%, #ede5d8 100%);
+  background-color: var(--canvas);
   color: var(--ink);
 }
 
@@ -44,18 +41,83 @@ textarea {
 }
 
 .glass-panel {
-  background: rgba(255, 252, 247, 0.82);
+  background: rgba(8, 8, 8, 0.96);
   backdrop-filter: blur(18px);
-  border: 1px solid rgba(140, 59, 28, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .grid-lines {
   background-image:
-    linear-gradient(rgba(59, 75, 87, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 75, 87, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
 .font-display {
   font-family: "Space Grotesk", "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+.surface-card {
+  background: rgba(8, 8, 8, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.surface-subtle {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.input-surface {
+  background: rgba(255, 255, 255, 0.98);
+  color: #15110f;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.input-surface::placeholder {
+  color: rgba(21, 17, 15, 0.55);
+}
+
+.input-surface:focus {
+  border-color: rgba(242, 140, 40, 0.55);
+}
+
+.btn-primary {
+  background: #f5f1eb;
+  color: #15110f;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.btn-primary:hover {
+  background: #ffffff;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f5f1eb;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-panel {
+  background: rgba(92, 34, 20, 0.45);
+  border: 1px solid rgba(255, 190, 134, 0.3);
+  color: #ffd4af;
 }
