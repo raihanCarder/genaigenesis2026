@@ -22,14 +22,24 @@ export function ServiceCard({
   locationParams?: string;
 }) {
   return (
-    <article className="rounded-4xl border border-black/5 bg-white p-5 shadow-card">
+    <article className="flex h-[26rem] flex-col rounded-4xl border border-black/5 bg-white p-5 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-black/45">
             {formatCategoryLabel(service.category)}
           </p>
           <h3 className="mt-2 text-xl font-semibold">{service.name}</h3>
-          <p className="mt-3 text-sm text-black/65">{service.description ?? service.address}</p>
+          <p
+            className="mt-3 min-h-[4.5rem] text-sm text-black/65"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden"
+            }}
+          >
+            {service.description ?? service.address}
+          </p>
         </div>
         <FavoriteButton service={service} compact />
       </div>
@@ -46,12 +56,12 @@ export function ServiceCard({
           </span>
         ) : null}
       </div>
-      <div className="mt-4 grid gap-2 text-sm text-black/60">
+      <div className="mt-4 min-h-[4.75rem] grid gap-2 text-sm text-black/60">
         <p>{service.address}</p>
         {service.hoursText ? <p>{service.hoursText}</p> : null}
         {service.phone ? <p>{service.phone}</p> : null}
       </div>
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div className="mt-auto flex flex-wrap gap-3 pt-5">
         <Link
           href={`/services/${service.id}${locationParams ? `?${locationParams}` : ""}`}
           className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-accentDark"
@@ -70,4 +80,3 @@ export function ServiceCard({
     </article>
   );
 }
-

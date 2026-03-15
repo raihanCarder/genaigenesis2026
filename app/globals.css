@@ -59,3 +59,12 @@ textarea {
 .font-display {
   font-family: "Space Grotesk", "Avenir Next", "Trebuchet MS", sans-serif;
 }
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

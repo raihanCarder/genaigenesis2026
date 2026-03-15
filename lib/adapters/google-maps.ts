@@ -1,6 +1,13 @@
 import { hasGoogleMapsEnv, serverEnv } from "@/lib/env";
 import { logError } from "@/lib/logger";
-import { ServiceSchema, type LocationContext, type LocationSuggestion, type Service, type ServiceCategory } from "@/lib/types";
+import {
+  ServiceSchema,
+  type LocationContext,
+  type LocationPlaceMetadata,
+  type LocationSuggestion,
+  type Service,
+  type ServiceCategory
+} from "@/lib/types";
 import { slugify } from "@/lib/utils";
 
 type ResolvedLocation = LocationContext & {
@@ -12,8 +19,33 @@ type CacheEntry<T> = {
   value: T;
 };
 
+type AddressComponent = {
+  long_name?: string;
+  short_name?: string;
+  types?: string[];
+};
+
+type LegacyGeocodeResult = {
+  formatted_address?: string;
+  place_id?: string;
+  geometry?: { location?: { lat?: number; lng?: number } };
+  address_components?: AddressComponent[];
+};
+
+type PlaceTextMatch = {
+  placeId?: string;
+  name?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  website?: string;
+  phone?: string;
+  openNow?: boolean;
+};
+
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const PLACES_ERROR_COOLDOWN_MS = 15 * 60 * 1000;
+const GOOGLE_FETCH_TIMEOUT_MS = 4000;
 
 export const TORONTO_CENTER: LocationContext = {
   latitude: 43.6532,
@@ -26,6 +58,9 @@ export const TORONTO_CENTER: LocationContext = {
 
 const geocodeCache = new Map<string, CacheEntry<ResolvedLocation>>();
 const autocompleteCache = new Map<string, CacheEntry<LocationSuggestion[]>>();
+const placeDetailsCache = new Map<string, CacheEntry<LocationPlaceMetadata | null>>();
+const placeSearchCache = new Map<string, CacheEntry<Service[]>>();
+const placeTextMatchCache = new Map<string, CacheEntry<LocationPlaceMetadata | null>>();
 const placesApiState = {
   disabledUntil: 0
 };
@@ -61,10 +96,15 @@ const fallbackLocations: Record<string, ResolvedLocation> = {
 };
 
 const placeQueries: Partial<Record<ServiceCategory, string>> = {
+  food: "food bank OR community meal OR soup kitchen",
+  "free-food-events": "community meal OR free lunch OR soup kitchen",
+  showers: "public shower OR hygiene program",
+  shelters: "homeless shelter OR emergency shelter",
   clinics: "community health centre",
   bathrooms: "public washroom",
   "wifi-charging": "public library charging wifi",
-  services: "community support centre"
+  services: "community support centre",
+  "legal-help": "legal clinic"
 };
 
 function usesLegacyPlacesApi() {
@@ -91,6 +131,20 @@ function setCachedValue<T>(cache: Map<string, CacheEntry<T>>, key: string, value
   return value;
 }
 
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 function isPlacesApiDisabled() {
   return Date.now() < placesApiState.disabledUntil;
 }
@@ -112,14 +166,12 @@ async function buildPlacesApiError(endpoint: string, response: Response) {
       const status = parsed.error?.status;
       detail = [status, message].filter(Boolean).join(": ") || detail;
     } catch {
-      // Leave the raw payload as-is when it is not JSON.
+      // Preserve raw payload when Google does not return JSON.
     }
   }
 
   return new Error(
-    `${endpoint} failed with ${response.status}${
-      detail ? ` (${detail})` : ""
-    }`
+    `${endpoint} failed with ${response.status}${detail ? ` (${detail})` : ""}`
   );
 }
 
@@ -147,7 +199,7 @@ function logPlacesApiFailure(endpoint: string, error: unknown, context?: Record<
 }
 
 function findAddressComponent(
-  components: Array<{ long_name?: string; short_name?: string; types?: string[] }> | undefined,
+  components: AddressComponent[] | undefined,
   matcher: (types: string[]) => boolean,
   key: "long_name" | "short_name" = "long_name"
 ) {
@@ -156,17 +208,28 @@ function findAddressComponent(
   return typeof value === "string" ? value : undefined;
 }
 
+function extractLocationFields(components: AddressComponent[] | undefined) {
+  const city =
+    findAddressComponent(components, (types) => types.includes("locality")) ??
+    findAddressComponent(components, (types) => types.includes("postal_town")) ??
+    findAddressComponent(components, (types) => types.includes("sublocality")) ??
+    findAddressComponent(components, (types) => types.includes("administrative_area_level_3"));
+  const region = findAddressComponent(
+    components,
+    (types) => types.includes("administrative_area_level_1"),
+    "short_name"
+  );
+  const country = findAddressComponent(components, (types) => types.includes("country"));
+
+  return {
+    city,
+    region,
+    country
+  };
+}
+
 function buildResolvedLocation(
-  result: {
-    formatted_address?: string;
-    place_id?: string;
-    geometry?: { location?: { lat?: number; lng?: number } };
-    address_components?: Array<{
-      long_name?: string;
-      short_name?: string;
-      types?: string[];
-    }>;
-  },
+  result: LegacyGeocodeResult,
   input: {
     latitude?: number;
     longitude?: number;
@@ -174,27 +237,34 @@ function buildResolvedLocation(
   }
 ): ResolvedLocation {
   const label = input.label?.trim() || result.formatted_address || "Selected location";
-  const city =
-    findAddressComponent(result.address_components, (types) => types.includes("locality")) ??
-    findAddressComponent(result.address_components, (types) => types.includes("postal_town")) ??
-    findAddressComponent(result.address_components, (types) => types.includes("sublocality")) ??
-    findAddressComponent(result.address_components, (types) => types.includes("administrative_area_level_3"));
-  const region = findAddressComponent(
-    result.address_components,
-    (types) => types.includes("administrative_area_level_1"),
-    "short_name"
-  );
-  const country = findAddressComponent(result.address_components, (types) => types.includes("country"));
+  const locationFields = extractLocationFields(result.address_components);
 
   return {
-    normalizedLocation: label,
+    normalizedLocation: result.formatted_address ?? label,
     label,
     latitude: input.latitude ?? result.geometry?.location?.lat ?? TORONTO_CENTER.latitude,
     longitude: input.longitude ?? result.geometry?.location?.lng ?? TORONTO_CENTER.longitude,
     placeId: result.place_id,
-    city,
-    region,
-    country
+    ...locationFields
+  };
+}
+
+function buildResolvedLocationFromPlaceMetadata(
+  place: LocationPlaceMetadata,
+  input: {
+    label?: string;
+  } = {}
+): ResolvedLocation {
+  const label = input.label?.trim() || place.address || place.name;
+  return {
+    normalizedLocation: place.address || label,
+    label,
+    latitude: place.latitude,
+    longitude: place.longitude,
+    placeId: place.placeId,
+    city: place.city,
+    region: place.region,
+    country: place.country
   };
 }
 
@@ -239,6 +309,385 @@ function getFallbackSuggestions(query: string) {
     }));
 }
 
+function parseLegacyPlaceMetadata(result: {
+  place_id?: string;
+  name?: string;
+  formatted_address?: string;
+  geometry?: { location?: { lat?: number; lng?: number } };
+  address_components?: AddressComponent[];
+  types?: string[];
+  website?: string;
+  formatted_phone_number?: string;
+  opening_hours?: { open_now?: boolean };
+}): LocationPlaceMetadata | null {
+  if (!result.place_id) {
+    return null;
+  }
+
+  const locationFields = extractLocationFields(result.address_components);
+  return {
+    placeId: result.place_id,
+    name: result.name ?? result.formatted_address ?? "Selected place",
+    address: result.formatted_address ?? result.name ?? "Unknown address",
+    latitude: result.geometry?.location?.lat ?? TORONTO_CENTER.latitude,
+    longitude: result.geometry?.location?.lng ?? TORONTO_CENTER.longitude,
+    types: result.types ?? [],
+    website: result.website,
+    phone: result.formatted_phone_number,
+    openNow: result.opening_hours?.open_now,
+    ...locationFields
+  };
+}
+
+function parseNewPlaceMetadata(result: {
+  id?: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  location?: { latitude?: number; longitude?: number };
+  types?: string[];
+  websiteUri?: string;
+  nationalPhoneNumber?: string;
+  currentOpeningHours?: { openNow?: boolean };
+  addressComponents?: Array<{
+    longText?: string;
+    shortText?: string;
+    types?: string[];
+  }>;
+}): LocationPlaceMetadata | null {
+  if (!result.id) {
+    return null;
+  }
+
+  const components = result.addressComponents?.map((component) => ({
+    long_name: component.longText,
+    short_name: component.shortText,
+    types: component.types
+  }));
+  const locationFields = extractLocationFields(components);
+
+  return {
+    placeId: result.id,
+    name: result.displayName?.text ?? result.formattedAddress ?? "Selected place",
+    address: result.formattedAddress ?? result.displayName?.text ?? "Unknown address",
+    latitude: result.location?.latitude ?? TORONTO_CENTER.latitude,
+    longitude: result.location?.longitude ?? TORONTO_CENTER.longitude,
+    types: result.types ?? [],
+    website: result.websiteUri,
+    phone: result.nationalPhoneNumber,
+    openNow: result.currentOpeningHours?.openNow,
+    ...locationFields
+  };
+}
+
+async function fetchGeocodeResult(input: {
+  location?: string;
+  placeId?: string;
+  latitude?: number;
+  longitude?: number;
+}) {
+  const hasCoordinates = Number.isFinite(input.latitude) && Number.isFinite(input.longitude);
+  const trimmedLocation = input.location?.trim();
+  const params = new URLSearchParams({
+    key: serverEnv.GOOGLE_MAPS_API_KEY ?? ""
+  });
+
+  if (input.placeId) {
+    params.set("place_id", input.placeId);
+  } else if (hasCoordinates) {
+    params.set("latlng", `${input.latitude},${input.longitude}`);
+  } else if (trimmedLocation) {
+    params.set("address", trimmedLocation);
+  }
+
+  const response = await fetchWithTimeout(
+    `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`,
+    { cache: "no-store" },
+    GOOGLE_FETCH_TIMEOUT_MS
+  );
+  const payload = (await response.json()) as {
+    results?: LegacyGeocodeResult[];
+    status?: string;
+  };
+
+  const result = payload.results?.[0];
+  if (!result) {
+    throw new Error(`Unable to geocode location. Status: ${payload.status ?? "unknown"}`);
+  }
+
+  return result;
+}
+
+function buildServiceFromPlaceMatch(
+  place: PlaceTextMatch,
+  category: ServiceCategory | undefined,
+  fallbackCoordinates: {
+    latitude: number;
+    longitude: number;
+  }
+) {
+  return ServiceSchema.safeParse({
+    id: `maps-${slugify(place.placeId ?? place.name ?? place.address ?? "place")}`,
+    name: place.name ?? "Unnamed place",
+    category,
+    address: place.address ?? "Unknown address",
+    latitude: place.latitude ?? fallbackCoordinates.latitude,
+    longitude: place.longitude ?? fallbackCoordinates.longitude,
+    placeId: place.placeId,
+    website: place.website,
+    phone: place.phone,
+    openNow: place.openNow,
+    sourceType: "maps",
+    sourceName: "Google Places",
+    sourceUrl: place.website,
+    confidenceScore: 0.72,
+    freshnessState: "unknown"
+  });
+}
+
+async function searchPlaceMatches(input: {
+  query: string;
+  latitude?: number;
+  longitude?: number;
+  maxResultCount?: number;
+}) {
+  if (!hasGoogleMapsEnv || isPlacesApiDisabled()) {
+    return [] satisfies PlaceTextMatch[];
+  }
+
+  try {
+    if (usesLegacyPlacesApi()) {
+      const params = new URLSearchParams({
+        query: input.query,
+        key: serverEnv.GOOGLE_MAPS_API_KEY ?? ""
+      });
+
+      if (Number.isFinite(input.latitude) && Number.isFinite(input.longitude)) {
+        params.set("location", `${input.latitude},${input.longitude}`);
+        params.set("radius", "5000");
+      }
+
+      const response = await fetchWithTimeout(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?${params.toString()}`,
+        { cache: "no-store" },
+        GOOGLE_FETCH_TIMEOUT_MS
+      );
+      const payload = (await response.json()) as {
+        status?: string;
+        error_message?: string;
+        results?: Array<{
+          place_id?: string;
+          name?: string;
+          formatted_address?: string;
+          geometry?: { location?: { lat?: number; lng?: number } };
+          opening_hours?: { open_now?: boolean };
+        }>;
+      };
+
+      if (payload.status && payload.status !== "OK" && payload.status !== "ZERO_RESULTS") {
+        if (shouldDisablePlacesFromLegacyStatus(payload.status)) {
+          disablePlacesApiTemporarily();
+        }
+        throw buildLegacyPlacesStatusError("Google Places search", payload);
+      }
+
+      return (payload.results ?? []).map((place) => ({
+        placeId: place.place_id,
+        name: place.name,
+        address: place.formatted_address,
+        latitude: place.geometry?.location?.lat,
+        longitude: place.geometry?.location?.lng,
+        openNow: place.opening_hours?.open_now
+      }));
+    }
+
+    const response = await fetchWithTimeout(
+      "https://places.googleapis.com/v1/places:searchText",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": serverEnv.GOOGLE_MAPS_API_KEY ?? "",
+          "X-Goog-FieldMask":
+            "places.id,places.displayName,places.formattedAddress,places.location,places.currentOpeningHours,places.websiteUri,places.nationalPhoneNumber"
+        },
+        body: JSON.stringify({
+          textQuery: input.query,
+          locationBias:
+            Number.isFinite(input.latitude) && Number.isFinite(input.longitude)
+              ? {
+                  circle: {
+                    center: {
+                      latitude: input.latitude,
+                      longitude: input.longitude
+                    },
+                    radius: 5000
+                  }
+                }
+              : undefined,
+          maxResultCount: input.maxResultCount ?? 8
+        }),
+        cache: "no-store"
+      },
+      GOOGLE_FETCH_TIMEOUT_MS
+    );
+
+    if (!response.ok) {
+      const error = await buildPlacesApiError("Google Places search", response);
+      if (response.status === 403) {
+        disablePlacesApiTemporarily();
+      }
+      throw error;
+    }
+
+    const payload = (await response.json()) as {
+      places?: Array<{
+        id?: string;
+        displayName?: { text?: string };
+        formattedAddress?: string;
+        location?: { latitude?: number; longitude?: number };
+        currentOpeningHours?: { openNow?: boolean };
+        websiteUri?: string;
+        nationalPhoneNumber?: string;
+      }>;
+    };
+
+    return (payload.places ?? []).map((place) => ({
+      placeId: place.id,
+      name: place.displayName?.text,
+      address: place.formattedAddress,
+      latitude: place.location?.latitude,
+      longitude: place.location?.longitude,
+      website: place.websiteUri,
+      phone: place.nationalPhoneNumber,
+      openNow: place.currentOpeningHours?.openNow
+    }));
+  } catch (error) {
+    logPlacesApiFailure("Google Places search", error, { query: input.query });
+    return [];
+  }
+}
+
+export async function getPlaceDetails(input: { placeId: string }) {
+  const placeId = input.placeId.trim();
+  if (!placeId || !hasGoogleMapsEnv || isPlacesApiDisabled()) {
+    return null;
+  }
+
+  const cacheKey = `placeId:${placeId}`;
+  const cached = getCachedValue(placeDetailsCache, cacheKey);
+  if (cached !== null) {
+    return cached;
+  }
+
+  try {
+    if (usesLegacyPlacesApi()) {
+      const params = new URLSearchParams({
+        place_id: placeId,
+        key: serverEnv.GOOGLE_MAPS_API_KEY ?? "",
+        fields:
+          "place_id,name,formatted_address,geometry,address_component,types,website,formatted_phone_number,opening_hours"
+      });
+      const response = await fetchWithTimeout(
+        `https://maps.googleapis.com/maps/api/place/details/json?${params.toString()}`,
+        { cache: "no-store" },
+        GOOGLE_FETCH_TIMEOUT_MS
+      );
+      const payload = (await response.json()) as {
+        status?: string;
+        error_message?: string;
+        result?: {
+          place_id?: string;
+          name?: string;
+          formatted_address?: string;
+          geometry?: { location?: { lat?: number; lng?: number } };
+          address_components?: AddressComponent[];
+          types?: string[];
+          website?: string;
+          formatted_phone_number?: string;
+          opening_hours?: { open_now?: boolean };
+        };
+      };
+
+      if (payload.status && payload.status !== "OK") {
+        if (shouldDisablePlacesFromLegacyStatus(payload.status)) {
+          disablePlacesApiTemporarily();
+        }
+        throw buildLegacyPlacesStatusError("Google Place Details", payload);
+      }
+
+      return setCachedValue(placeDetailsCache, cacheKey, parseLegacyPlaceMetadata(payload.result ?? {}));
+    }
+
+    const response = await fetchWithTimeout(
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+      {
+        headers: {
+          "X-Goog-Api-Key": serverEnv.GOOGLE_MAPS_API_KEY ?? "",
+          "X-Goog-FieldMask":
+            "id,displayName,formattedAddress,location,types,websiteUri,nationalPhoneNumber,currentOpeningHours,addressComponents"
+        },
+        cache: "no-store"
+      },
+      GOOGLE_FETCH_TIMEOUT_MS
+    );
+
+    if (!response.ok) {
+      const error = await buildPlacesApiError("Google Place Details", response);
+      if (response.status === 403) {
+        disablePlacesApiTemporarily();
+      }
+      throw error;
+    }
+
+    const payload = (await response.json()) as {
+      id?: string;
+      displayName?: { text?: string };
+      formattedAddress?: string;
+      location?: { latitude?: number; longitude?: number };
+      types?: string[];
+      websiteUri?: string;
+      nationalPhoneNumber?: string;
+      currentOpeningHours?: { openNow?: boolean };
+      addressComponents?: Array<{
+        longText?: string;
+        shortText?: string;
+        types?: string[];
+      }>;
+    };
+
+    return setCachedValue(placeDetailsCache, cacheKey, parseNewPlaceMetadata(payload));
+  } catch (error) {
+    logPlacesApiFailure("Google Place Details", error, { placeId });
+    return setCachedValue(placeDetailsCache, cacheKey, null);
+  }
+}
+
+export async function searchPlaceMetadataByText(input: {
+  query: string;
+  latitude?: number;
+  longitude?: number;
+}) {
+  const cacheKey = `${input.query.toLowerCase()}::${input.latitude ?? ""}::${input.longitude ?? ""}`;
+  const cached = getCachedValue(placeTextMatchCache, cacheKey);
+  if (cached !== null) {
+    return cached;
+  }
+
+  const matches = await searchPlaceMatches({
+    query: input.query,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    maxResultCount: 3
+  });
+  const first = matches[0];
+  if (!first?.placeId) {
+    return setCachedValue(placeTextMatchCache, cacheKey, null);
+  }
+
+  const place = await getPlaceDetails({ placeId: first.placeId });
+  return setCachedValue(placeTextMatchCache, cacheKey, place);
+}
+
 export async function geocodeLocation(input: {
   location?: string;
   placeId?: string;
@@ -246,8 +695,7 @@ export async function geocodeLocation(input: {
   longitude?: number;
   label?: string;
 }) {
-  const hasCoordinates =
-    Number.isFinite(input.latitude) && Number.isFinite(input.longitude);
+  const hasCoordinates = Number.isFinite(input.latitude) && Number.isFinite(input.longitude);
   const trimmedLocation = input.location?.trim();
   if (!trimmedLocation && !input.placeId && !hasCoordinates) {
     throw new Error("Location is required.");
@@ -269,40 +717,27 @@ export async function geocodeLocation(input: {
     return setCachedValue(geocodeCache, cacheKey, getFallbackLocation(input));
   }
 
-  const params = new URLSearchParams({
-    key: serverEnv.GOOGLE_MAPS_API_KEY ?? ""
-  });
   if (input.placeId) {
-    params.set("place_id", input.placeId);
-  } else if (hasCoordinates) {
-    params.set("latlng", `${input.latitude},${input.longitude}`);
-  } else if (trimmedLocation) {
-    params.set("address", trimmedLocation);
+    const place = await getPlaceDetails({ placeId: input.placeId });
+    if (place) {
+      return setCachedValue(
+        geocodeCache,
+        cacheKey,
+        buildResolvedLocationFromPlaceMetadata(place, { label: input.label })
+      );
+    }
   }
 
-  const response = await fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`,
-    { cache: "no-store" }
-  );
-  const payload = (await response.json()) as {
-    results?: Array<{
-      formatted_address?: string;
-      place_id?: string;
-      geometry?: { location?: { lat?: number; lng?: number } };
-      address_components?: Array<{
-        long_name?: string;
-        short_name?: string;
-        types?: string[];
-      }>;
-    }>;
-    status?: string;
-  };
-  const result = payload.results?.[0];
-  if (!result) {
-    throw new Error(`Unable to geocode location. Status: ${payload.status ?? "unknown"}`);
-  }
+  const result = await fetchGeocodeResult(input);
+  const hydratedPlace = result.place_id
+    ? await getPlaceDetails({ placeId: result.place_id })
+    : null;
 
-  return setCachedValue(geocodeCache, cacheKey, buildResolvedLocation(result, input));
+  const resolved = hydratedPlace
+    ? buildResolvedLocationFromPlaceMetadata(hydratedPlace, { label: input.label })
+    : buildResolvedLocation(result, input);
+
+  return setCachedValue(geocodeCache, cacheKey, resolved);
 }
 
 export async function autocompleteLocations(input: {
@@ -335,9 +770,10 @@ export async function autocompleteLocations(input: {
         params.set("sessiontoken", input.sessionToken);
       }
 
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `https://maps.googleapis.com/maps/api/place/autocomplete/json?${params.toString()}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
+        GOOGLE_FETCH_TIMEOUT_MS
       );
       const payload = (await response.json()) as {
         status?: string;
@@ -376,21 +812,25 @@ export async function autocompleteLocations(input: {
       return setCachedValue(autocompleteCache, cacheKey, suggestions);
     }
 
-    const response = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": serverEnv.GOOGLE_MAPS_API_KEY ?? "",
-        "X-Goog-FieldMask":
-          "suggestions.placePrediction.placeId,suggestions.placePrediction.text.text,suggestions.placePrediction.structuredFormat.mainText.text,suggestions.placePrediction.structuredFormat.secondaryText.text"
+    const response = await fetchWithTimeout(
+      "https://places.googleapis.com/v1/places:autocomplete",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": serverEnv.GOOGLE_MAPS_API_KEY ?? "",
+          "X-Goog-FieldMask":
+            "suggestions.placePrediction.placeId,suggestions.placePrediction.text.text,suggestions.placePrediction.structuredFormat.mainText.text,suggestions.placePrediction.structuredFormat.secondaryText.text"
+        },
+        body: JSON.stringify({
+          input: query,
+          includeQueryPredictions: false,
+          sessionToken: input.sessionToken
+        }),
+        cache: "no-store"
       },
-      body: JSON.stringify({
-        input: query,
-        includeQueryPredictions: false,
-        sessionToken: input.sessionToken
-      }),
-      cache: "no-store"
-    });
+      GOOGLE_FETCH_TIMEOUT_MS
+    );
 
     if (!response.ok) {
       const error = await buildPlacesApiError("Google Places autocomplete", response);
@@ -449,124 +889,30 @@ export async function searchSupplementalPlaces(input: {
   category?: ServiceCategory;
 }) {
   const query = input.category ? placeQueries[input.category] : undefined;
+  const cacheKey = `${input.category ?? "all"}::${input.latitude},${input.longitude}`;
+  const cached = getCachedValue(placeSearchCache, cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   if (!hasGoogleMapsEnv || !query || isPlacesApiDisabled()) {
     return [] satisfies Service[];
   }
 
-  try {
-    if (usesLegacyPlacesApi()) {
-      const params = new URLSearchParams({
-        query,
-        location: `${input.latitude},${input.longitude}`,
-        radius: "5000",
-        key: serverEnv.GOOGLE_MAPS_API_KEY ?? ""
-      });
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/textsearch/json?${params.toString()}`,
-        { cache: "no-store" }
-      );
-      const payload = (await response.json()) as {
-        status?: string;
-        error_message?: string;
-        results?: Array<{
-          place_id?: string;
-          name?: string;
-          formatted_address?: string;
-          geometry?: { location?: { lat?: number; lng?: number } };
-          opening_hours?: { open_now?: boolean };
-        }>;
-      };
+  const matches = await searchPlaceMatches({
+    query,
+    latitude: input.latitude,
+    longitude: input.longitude
+  });
 
-      if (payload.status && payload.status !== "OK" && payload.status !== "ZERO_RESULTS") {
-        if (shouldDisablePlacesFromLegacyStatus(payload.status)) {
-          disablePlacesApiTemporarily();
-        }
-        throw buildLegacyPlacesStatusError("Google Places search", payload);
-      }
+  const services = matches
+    .map((place) =>
+      buildServiceFromPlaceMatch(place, input.category, {
+        latitude: input.latitude,
+        longitude: input.longitude
+      })
+    )
+    .flatMap((result) => (result.success ? [result.data] : []));
 
-      return (payload.results ?? [])
-        .map((place) =>
-          ServiceSchema.safeParse({
-            id: `maps-${slugify(place.place_id ?? place.name ?? "place")}`,
-            name: place.name ?? "Unnamed place",
-            category: input.category,
-            address: place.formatted_address ?? "Unknown address",
-            latitude: place.geometry?.location?.lat ?? input.latitude,
-            longitude: place.geometry?.location?.lng ?? input.longitude,
-            openNow: place.opening_hours?.open_now,
-            sourceType: "maps",
-            sourceName: "Google Places",
-            confidenceScore: 0.72,
-            freshnessState: "unknown"
-          })
-        )
-        .flatMap((result) => (result.success ? [result.data] : []));
-    }
-
-    const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": serverEnv.GOOGLE_MAPS_API_KEY ?? "",
-        "X-Goog-FieldMask":
-          "places.id,places.displayName,places.formattedAddress,places.location,places.currentOpeningHours,places.websiteUri"
-      },
-      body: JSON.stringify({
-        textQuery: query,
-        locationBias: {
-          circle: {
-            center: {
-              latitude: input.latitude,
-              longitude: input.longitude
-            },
-            radius: 5000
-          }
-        },
-        maxResultCount: 8
-      }),
-      cache: "no-store"
-    });
-
-    if (!response.ok) {
-      const error = await buildPlacesApiError("Google Places search", response);
-      if (response.status === 403) {
-        disablePlacesApiTemporarily();
-      }
-      throw error;
-    }
-
-    const payload = (await response.json()) as {
-      places?: Array<{
-        id?: string;
-        displayName?: { text?: string };
-        formattedAddress?: string;
-        location?: { latitude?: number; longitude?: number };
-        currentOpeningHours?: { openNow?: boolean };
-        websiteUri?: string;
-      }>;
-    };
-
-    return (payload.places ?? [])
-      .map((place) =>
-        ServiceSchema.safeParse({
-          id: `maps-${slugify(place.id ?? place.displayName?.text ?? "place")}`,
-          name: place.displayName?.text ?? "Unnamed place",
-          category: input.category,
-          address: place.formattedAddress ?? "Unknown address",
-          latitude: place.location?.latitude ?? input.latitude,
-          longitude: place.location?.longitude ?? input.longitude,
-          website: place.websiteUri,
-          openNow: place.currentOpeningHours?.openNow,
-          sourceType: "maps",
-          sourceName: "Google Places",
-          sourceUrl: place.websiteUri,
-          confidenceScore: 0.72,
-          freshnessState: "unknown"
-        })
-      )
-      .flatMap((result) => (result.success ? [result.data] : []));
-  } catch (error) {
-    logPlacesApiFailure("Google Places search", error, { category: input.category });
-    return [];
-  }
+  return setCachedValue(placeSearchCache, cacheKey, services);
 }

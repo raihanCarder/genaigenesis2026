@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchDashboardServices } from "@/features/dashboard/api/dashboard-api";
-import type { LocationContext, ServiceWithMeta } from "@/lib/types";
+import { fetchDashboardPayload } from "@/features/dashboard/api/dashboard-api";
+import type { DashboardPayload, LocationContext } from "@/lib/types";
 
 export function useDashboardServices(location: LocationContext) {
-  const [services, setServices] = useState<ServiceWithMeta[]>([]);
+  const [payload, setPayload] = useState<DashboardPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,9 +16,9 @@ export function useDashboardServices(location: LocationContext) {
       setLoading(true);
       setError(null);
       try {
-        const payload = await fetchDashboardServices(location);
+        const payload = await fetchDashboardPayload(location);
         if (!cancelled) {
-          setServices(payload);
+          setPayload(payload);
         }
       } catch (error) {
         if (!cancelled) {
@@ -39,9 +39,12 @@ export function useDashboardServices(location: LocationContext) {
   }, [location.latitude, location.longitude, location.label]);
 
   return {
-    services,
+    payload,
+    services: payload?.services ?? [],
+    location: payload?.location ?? location,
+    anchorPlace: payload?.anchorPlace ?? null,
+    warnings: payload?.warnings ?? [],
     loading,
     error
   };
 }
-

@@ -1,4 +1,5 @@
 import { searchSupplementalPlaces } from "@/lib/adapters/google-maps";
+import { findDashboardServiceById } from "@/lib/services/dashboard";
 import { getCuratedServices, withDistance } from "@/lib/services/normalization";
 import { rankServices } from "@/lib/services/ranking";
 import type { ServiceCategory, ServiceWithMeta } from "@/lib/types";
@@ -13,6 +14,10 @@ type SearchParams = {
 };
 
 const supplementalCategories: ServiceCategory[] = [
+  "food",
+  "free-food-events",
+  "showers",
+  "shelters",
   "bathrooms",
   "clinics",
   "services",
@@ -88,6 +93,11 @@ export async function getServiceById(input: {
   id: string;
   latitude?: number;
   longitude?: number;
+  label?: string;
+  placeId?: string;
+  city?: string;
+  region?: string;
+  country?: string;
 }) {
   const curated = getCuratedServices();
   const match = curated.find((service) => service.id === input.id);
@@ -106,5 +116,21 @@ export async function getServiceById(input: {
     latitude: input.latitude,
     longitude: input.longitude
   });
-  return services.find((service) => service.id === input.id) ?? null;
+  const supplementalMatch = services.find((service) => service.id === input.id);
+  if (supplementalMatch) {
+    return supplementalMatch;
+  }
+
+  return findDashboardServiceById({
+    id: input.id,
+    location: {
+      latitude: input.latitude,
+      longitude: input.longitude,
+      label: input.label ?? "Selected location",
+      placeId: input.placeId,
+      city: input.city,
+      region: input.region,
+      country: input.country
+    }
+  });
 }

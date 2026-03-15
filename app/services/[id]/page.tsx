@@ -17,7 +17,12 @@ export default async function ServiceDetailPage({
   const service = await getServiceById({
     id,
     latitude: location.latitude,
-    longitude: location.longitude
+    longitude: location.longitude,
+    label: location.label,
+    placeId: location.placeId,
+    city: location.city,
+    region: location.region,
+    country: location.country
   });
 
   if (!service) {

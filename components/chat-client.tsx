@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { fetchDashboardPayload } from "@/features/dashboard/api/dashboard-api";
 import { fetchJson } from "@/lib/api/fetch-json";
 import { buildLocationSearchParams } from "@/lib/location";
 import {
   ChatResponseSchema,
-  ServiceWithMetaSchema,
   type ChatResponse,
+  type DashboardPayload,
   type LocationContext,
-  type ServiceCategory,
-  type ServiceWithMeta
+  type ServiceCategory
 } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 import { ServiceCard } from "@/components/service-card";
@@ -26,8 +26,6 @@ type ChatEntry =
   | { role: "user"; content: string }
   | { role: "assistant"; content: ChatResponse };
 
-const ChatServicesResponseSchema = ServiceWithMetaSchema.array();
-
 export function ChatClient({
   initialLocation,
   initialSelectedCategory
@@ -42,24 +40,28 @@ export function ChatClient({
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [input, setInput] = useState(promptChips[0]);
   const [loading, setLoading] = useState(false);
+  const [contextPayload, setContextPayload] = useState<DashboardPayload | null>(null);
 
   useEffect(() => {
     setLocation(initialLocation);
   }, [initialLocation, setLocation]);
 
   useEffect(() => {
-    if (services.length > 0) {
-      return;
-    }
-    const params = new URLSearchParams({
-      lat: initialLocation.latitude.toString(),
-      lng: initialLocation.longitude.toString(),
-      radius: "6000"
+    let cancelled = false;
+
+    void fetchDashboardPayload(initialLocation).then((payload) => {
+      if (cancelled) {
+        return;
+      }
+      setContextPayload(payload);
+      setServices(payload.services);
+      setLocation(payload.location);
     });
-    void fetchJson<unknown>(`/api/services?${params.toString()}`)
-      .then((payload) => ChatServicesResponseSchema.parse(payload))
-      .then((payload: ServiceWithMeta[]) => setServices(payload));
-  }, [initialLocation.latitude, initialLocation.longitude, services.length, setServices]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialLocation, initialLocation.latitude, initialLocation.longitude, setLocation, setServices]);
 
   const locationParams = buildLocationSearchParams(location, {
     category: initialSelectedCategory
@@ -205,6 +207,9 @@ export function ChatClient({
           <p className="mt-3 text-sm text-black/60">
             {services.length} services loaded. Chat only reasons over this set.
           </p>
+          {contextPayload?.warnings[0] ? (
+            <p className="mt-3 text-sm text-amber-800">{contextPayload.warnings[0]}</p>
+          ) : null}
         </div>
         {services.slice(0, 4).map((service) => (
           <ServiceCard key={service.id} service={service} locationParams={locationParams} />

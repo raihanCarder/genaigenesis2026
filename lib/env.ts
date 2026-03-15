@@ -3,6 +3,7 @@ import { z } from "zod";
 const serverEnvSchema = z.object({
   GOOGLE_MAPS_API_KEY: z.string().optional(),
   GOOGLE_PLACES_API_FLAVOR: z.enum(["legacy", "new"]).default("legacy"),
+  BRAVE_SEARCH_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default("gemini-2.5-flash")
 });
@@ -21,6 +22,8 @@ export const clientEnv = clientEnvSchema.parse({
 });
 
 export const hasGoogleMapsEnv = Boolean(serverEnv.GOOGLE_MAPS_API_KEY);
+export const braveSearchApiKey = serverEnv.BRAVE_SEARCH_API_KEY;
+export const hasBraveSearchEnv = Boolean(braveSearchApiKey);
 export const hasGeminiEnv = Boolean(serverEnv.GEMINI_API_KEY);
 export const supabaseUrl = clientEnv.NEXT_PUBLIC_SUPABASE_URL;
 export const supabasePublishableKey =
