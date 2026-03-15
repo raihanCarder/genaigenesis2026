@@ -162,9 +162,6 @@ export function ChatClient({
               <h1 className="font-display text-[1.55rem] font-semibold tracking-tight sm:text-[1.8rem]">
                 Message Beacon
               </h1>
-              <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs text-white/68">
-                {activeLocation.label}
-              </span>
             </div>
             <p className="mt-2.5 max-w-2xl text-sm leading-5 text-white/58">
               Each prompt resets the grounded reply and uses the full current nearby results.

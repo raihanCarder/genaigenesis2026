@@ -148,17 +148,17 @@ export function LocationEntry() {
       body: JSON.stringify(input),
     });
     const resolved = LocationGeocodeResponseSchema.parse(payload);
-    await pushLocation(
-      toLocationContext({
-        latitude: resolved.latitude,
-        longitude: resolved.longitude,
-        label: resolved.label ?? resolved.normalizedLocation,
-        placeId: resolved.placeId,
-        city: resolved.city,
-        region: resolved.region,
-        country: resolved.country,
-      }),
-    );
+    const nextLocation = toLocationContext({
+      latitude: resolved.latitude,
+      longitude: resolved.longitude,
+      label: resolved.label ?? resolved.normalizedLocation,
+      placeId: resolved.placeId,
+      city: resolved.city,
+      region: resolved.region,
+      country: resolved.country,
+    });
+    setQuery(nextLocation.label);
+    await pushLocation(nextLocation);
   }
 
   async function submitTypedLocation() {
@@ -240,8 +240,8 @@ export function LocationEntry() {
     >
       <div className="grid gap-4">
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-black/65">
-            Enter a location
+          <span className="font-display text-base font-semibold tracking-[0.02em] text-white/82 md:text-lg">
+            Location:
           </span>
           <div className="relative">
             <MapPin
