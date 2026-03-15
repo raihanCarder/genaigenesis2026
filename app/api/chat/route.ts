@@ -1,22 +1,33 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { generateGroundedChat } from "@/lib/adapters/gemini";
-import { ChatResponseSchema, ServiceWithMetaSchema, type ChatRequestPayload } from "@/lib/types";
+import {
+  ChatResponseSchema,
+  LocationContextSchema,
+  ServiceCategorySchema,
+  ServiceWithMetaSchema
+} from "@/lib/types";
+
+const ChatRequestBodySchema = z.object({
+  message: z.string().trim().min(1),
+  location: LocationContextSchema,
+  selectedCategory: ServiceCategorySchema.optional(),
+  services: ServiceWithMetaSchema.array(),
+  warnings: z.array(z.string()).optional()
+});
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as Partial<ChatRequestPayload>;
-    if (!body.message || !body.location || !Array.isArray(body.services)) {
-      return NextResponse.json({ error: "Invalid chat payload." }, { status: 400 });
-    }
-    const services = ServiceWithMetaSchema.array().parse(body.services.slice(0, 12));
+    const body = ChatRequestBodySchema.parse(await request.json());
     const response = await generateGroundedChat({
-      message: body.message,
-      location: body.location,
-      selectedCategory: body.selectedCategory,
-      services
+      ...body,
+      warnings: body.warnings ?? []
     });
     return NextResponse.json(ChatResponseSchema.parse(response));
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid chat payload." }, { status: 400 });
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to generate chat response." },
       { status: 500 }

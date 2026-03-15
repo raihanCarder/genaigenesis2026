@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { Bot, Compass, LoaderCircle, MapPin, Send, ShieldCheck, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { fetchDashboardPayload } from "@/features/dashboard/api/dashboard-api";
+import {
+  fetchDashboardPayload,
+  getCachedDashboardPayload
+} from "@/features/dashboard/api/dashboard-api";
 import { fetchJson } from "@/lib/api/fetch-json";
+import { buildDirectionsUrl } from "@/lib/adapters/google-maps";
 import { buildLocationSearchParams } from "@/lib/location";
 import {
   ChatResponseSchema,
@@ -36,7 +40,6 @@ export function ChatClient({
   initialLocation: LocationContext;
   initialSelectedCategory?: ServiceCategory;
 }) {
-  const services = useAppStore((state) => state.services);
   const user = useAppStore((state) => state.user);
   const setServices = useAppStore((state) => state.setServices);
   const setLocation = useAppStore((state) => state.setLocation);
@@ -44,6 +47,7 @@ export function ChatClient({
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cachedContextPayload, setCachedContextPayload] = useState<DashboardPayload | null>(null);
   const [contextPayload, setContextPayload] = useState<DashboardPayload | null>(null);
   const [contextLoading, setContextLoading] = useState(true);
   const [contextError, setContextError] = useState<string | null>(null);
@@ -58,6 +62,8 @@ export function ChatClient({
   useEffect(() => {
     setEntries([]);
     setChatError(null);
+    setContextPayload(null);
+    setCachedContextPayload(getCachedDashboardPayload(location));
   }, [location.latitude, location.longitude, location.label]);
 
   useEffect(() => {
@@ -100,16 +106,18 @@ export function ChatClient({
     container.scrollTop = container.scrollHeight;
   }, [entries, loading]);
 
-  const locationParams = buildLocationSearchParams(location, {
+  const effectiveContextPayload = contextPayload ?? cachedContextPayload;
+  const activeLocation = effectiveContextPayload?.location ?? location;
+  const activeServices = effectiveContextPayload?.services ?? [];
+  const activeWarnings = effectiveContextPayload?.warnings ?? [];
+  const locationParams = buildLocationSearchParams(activeLocation, {
     category: initialSelectedCategory
   });
-
-  const visibleServices = services.slice(0, 12);
-  const contextReady = !contextLoading || services.length > 0;
+  const contextReady = Boolean(effectiveContextPayload);
 
   async function sendMessage(rawMessage: string) {
     const message = rawMessage.trim();
-    if (!message || loading || !contextReady) {
+    if (!message || loading || !contextReady || !effectiveContextPayload) {
       return;
     }
 
@@ -126,12 +134,10 @@ export function ChatClient({
         },
         body: JSON.stringify({
           message,
-          location: {
-            latitude: location.latitude,
-            longitude: location.longitude
-          },
+          location: effectiveContextPayload.location,
           selectedCategory: initialSelectedCategory,
-          services: visibleServices
+          services: effectiveContextPayload.services,
+          warnings: effectiveContextPayload.warnings
         })
       });
       setEntries([
@@ -157,11 +163,11 @@ export function ChatClient({
                 Message Beacon
               </h1>
               <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs text-white/68">
-                {location.label}
+                {activeLocation.label}
               </span>
             </div>
             <p className="mt-2.5 max-w-2xl text-sm leading-5 text-white/58">
-              Each prompt resets the grounded reply and uses only the current nearby results.
+              Each prompt resets the grounded reply and uses the full current nearby results.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {promptChips.map((chip) => (
@@ -226,7 +232,7 @@ export function ChatClient({
                   ) : (
                     <AssistantReplyCard
                       response={entry.content}
-                      services={services}
+                      services={activeServices}
                       locationParams={locationParams}
                     />
                   )}
@@ -282,7 +288,7 @@ export function ChatClient({
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/8 px-2.5 pb-1 pt-2.5">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-white/38">
                     {contextReady
-                      ? `Grounded on ${visibleServices.length} nearby services`
+                      ? `Grounded on ${activeServices.length} nearby services`
                       : "Loading nearby context"}
                   </p>
                   <button
@@ -308,18 +314,18 @@ export function ChatClient({
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-white/42">Search context</p>
-              <h2 className="mt-1.5 font-display text-xl font-semibold">{location.label}</h2>
+              <h2 className="mt-1.5 font-display text-xl font-semibold">{activeLocation.label}</h2>
             </div>
           </div>
           <div className="mt-4 grid gap-2.5">
             <div className="surface-subtle rounded-[1.2rem] p-3.5">
               <p className="text-xs uppercase tracking-[0.18em] text-white/38">Services loaded</p>
-              <p className="mt-1.5 text-xl font-semibold text-white">{services.length}</p>
+              <p className="mt-1.5 text-xl font-semibold text-white">{activeServices.length}</p>
               <p className="mt-1 text-sm leading-5 text-white/55">Only this result set is used for replies.</p>
             </div>
-            {contextPayload?.warnings[0] ? (
+            {activeWarnings[0] ? (
               <div className="rounded-[1.2rem] border border-accent/25 bg-accent/10 p-3.5 text-sm leading-5 text-accentDark">
-                {contextPayload.warnings[0]}
+                {activeWarnings[0]}
               </div>
             ) : null}
             <div className="surface-subtle rounded-[1.2rem] p-3.5">
@@ -344,11 +350,11 @@ export function ChatClient({
               <h2 className="font-display text-xl font-semibold">Nearby options</h2>
             </div>
             <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/45">
-              Top {Math.min(4, services.length)}
+              Top {Math.min(4, activeServices.length)}
             </span>
           </div>
           <div className="chat-scrollbar mt-4 grid min-h-0 gap-2.5 overflow-y-auto pr-1">
-            {services.slice(0, 4).map((service) => (
+            {activeServices.slice(0, 4).map((service) => (
               <Link
                 key={service.id}
                 href={`/services/${service.id}?${locationParams}`}
@@ -370,7 +376,7 @@ export function ChatClient({
                 </p>
               </Link>
             ))}
-            {services.length === 0 && !contextLoading ? (
+            {activeServices.length === 0 && !contextLoading ? (
               <div className="surface-subtle rounded-[1.2rem] p-3.5 text-sm text-white/55">
                 No services loaded for this location yet.
               </div>
@@ -427,6 +433,12 @@ function AssistantReplyCard({
   services: ServiceWithMeta[];
   locationParams: string;
 }) {
+  const recommendations = response.recommendedServices.flatMap((recommendation) => {
+    const match = services.find((service) => service.id === recommendation.serviceId);
+    return match ? [{ recommendation, service: match }] : [];
+  });
+  const hasSingleResult = recommendations.length === 1;
+
   return (
     <div className="surface-card overflow-hidden rounded-[1.45rem] rounded-bl-md border border-white/10">
       <div className="border-b border-white/8 px-4 py-3">
@@ -438,49 +450,61 @@ function AssistantReplyCard({
         ) : null}
       </div>
 
-      {response.recommendedServices.length > 0 ? (
+      {recommendations.length > 0 ? (
         <div className="grid gap-2.5 px-3 py-3 sm:px-4">
-          {response.recommendedServices.map((recommendation) => {
-            const match = services.find((service) => service.id === recommendation.serviceId);
-            if (!match) {
-              return null;
-            }
-
-            return (
-              <div
-                key={recommendation.serviceId}
-                className="surface-subtle rounded-[1.1rem] p-3 transition hover:border-white/16 hover:bg-white/[0.04]"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-[0.68rem] uppercase tracking-[0.2em] text-white/36">
-                      {formatCategoryLabel(match.category)}
-                    </p>
-                    <p className="mt-1.5 text-sm font-semibold text-white">{match.name}</p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-medium text-accentDark">
-                    {formatDistance(match.distanceMeters)}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm leading-5 text-white/58">{recommendation.reason}</p>
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <p className="truncate text-xs uppercase tracking-[0.18em] text-white/34">
-                    {match.address}
+          {recommendations.map(({ recommendation, service }) => (
+            <div
+              key={recommendation.serviceId}
+              className="surface-subtle rounded-[1.1rem] p-3 transition hover:border-white/16 hover:bg-white/[0.04]"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[0.68rem] uppercase tracking-[0.2em] text-white/36">
+                    {formatCategoryLabel(service.category)}
                   </p>
+                  <p className="mt-1.5 text-sm font-semibold text-white">{service.name}</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-medium text-accentDark">
+                  {formatDistance(service.distanceMeters)}
+                </span>
+              </div>
+              <p className="mt-2 text-sm leading-5 text-white/58">{recommendation.reason}</p>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <p className="truncate text-xs uppercase tracking-[0.18em] text-white/34">
+                  {service.address}
+                </p>
+                {hasSingleResult ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a
+                      href={buildDirectionsUrl(service)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-full bg-[#f4efe7] px-3 py-1.5 text-xs font-medium text-[#13100f] transition hover:bg-white"
+                    >
+                      Directions
+                    </a>
+                    <Link
+                      href={`/services/${service.id}?${locationParams}`}
+                      className="rounded-full border border-white/12 px-3 py-1.5 text-xs font-medium text-white transition hover:border-white/22 hover:bg-white/[0.05]"
+                    >
+                      View details
+                    </Link>
+                  </div>
+                ) : (
                   <Link
-                    href={`/services/${match.id}?${locationParams}`}
+                    href={`/services/${service.id}?${locationParams}`}
                     className="rounded-full border border-white/12 px-3 py-1.5 text-xs font-medium text-white transition hover:border-white/22 hover:bg-white/[0.05]"
                   >
                     View details
                   </Link>
-                </div>
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       ) : null}
 
-      {response.nextSteps.length > 0 ? (
+      {response.intent !== "irrelevant" && response.nextSteps.length > 0 ? (
         <div className="border-t border-white/8 px-4 py-3">
           <p className="text-xs uppercase tracking-[0.2em] text-white/38">Suggested next steps</p>
           <div className="mt-2.5 grid gap-2">
