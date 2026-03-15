@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
 import { TORONTO_CENTER } from "@/lib/adapters/google-maps";
+import { clearCachedDashboardPayload } from "@/features/dashboard/api/dashboard-api";
 import { fetchJson } from "@/lib/api/fetch-json";
 import { buildLocationSearchParams } from "@/lib/location";
 import {
@@ -118,6 +119,7 @@ export function LocationEntry() {
   }, [query, sessionToken]);
 
   async function pushLocation(location: LocationContext) {
+    clearCachedDashboardPayload(location);
     startTransition(() => {
       setLocation(location);
       router.push(buildDashboardHref(location));

@@ -10,21 +10,31 @@ import {
 } from "lucide-react";
 import { SignInButton } from "@/components/sign-in-button";
 import { NavBar } from "@/components/ui/tubelight-navbar";
+import { buildLocationSearchParams } from "@/lib/location";
 import { useAppStore } from "@/store/app-store";
-
-const publicItems = [
-  { name: "Home", url: "/", icon: House },
-  { name: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { name: "Chat", url: "/chat", icon: MessageSquareText }
-];
-
-const privateItems = [
-  { name: "Plan", url: "/plan", icon: Map },
-  { name: "Saved", url: "/saved", icon: Heart }
-];
 
 export function TopNav() {
   const user = useAppStore((state) => state.user);
+  const location = useAppStore((state) => state.location);
+
+  function withLocation(url: string) {
+    if (!location || url === "/") {
+      return url;
+    }
+    return `${url}?${buildLocationSearchParams(location)}`;
+  }
+
+  const publicItems = [
+    { name: "Home", url: "/", icon: House },
+    { name: "Dashboard", url: withLocation("/dashboard"), icon: LayoutDashboard },
+    { name: "Chat", url: withLocation("/chat"), icon: MessageSquareText }
+  ];
+
+  const privateItems = [
+    { name: "Plan", url: withLocation("/plan"), icon: Map },
+    { name: "Saved", url: withLocation("/saved"), icon: Heart }
+  ];
+
   const items = user ? [...publicItems, ...privateItems] : publicItems;
 
   return (

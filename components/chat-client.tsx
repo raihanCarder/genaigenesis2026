@@ -36,20 +36,20 @@ export function ChatClient({
   const services = useAppStore((state) => state.services);
   const setServices = useAppStore((state) => state.setServices);
   const setLocation = useAppStore((state) => state.setLocation);
-  const location = useAppStore((state) => state.location) ?? initialLocation;
+  const location = initialLocation;
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [input, setInput] = useState(promptChips[0]);
   const [loading, setLoading] = useState(false);
   const [contextPayload, setContextPayload] = useState<DashboardPayload | null>(null);
 
   useEffect(() => {
-    setLocation(initialLocation);
-  }, [initialLocation, setLocation]);
+    setLocation(location);
+  }, [location, setLocation]);
 
   useEffect(() => {
     let cancelled = false;
 
-    void fetchDashboardPayload(initialLocation).then((payload) => {
+    void fetchDashboardPayload(location, { preferCache: true }).then((payload) => {
       if (cancelled) {
         return;
       }
@@ -61,7 +61,7 @@ export function ChatClient({
     return () => {
       cancelled = true;
     };
-  }, [initialLocation, initialLocation.latitude, initialLocation.longitude, setLocation, setServices]);
+  }, [location, location.latitude, location.longitude, setLocation, setServices]);
 
   const locationParams = buildLocationSearchParams(location, {
     category: initialSelectedCategory

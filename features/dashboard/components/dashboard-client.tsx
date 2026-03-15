@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { HelplineFooter } from "@/components/helpline-footer";
 import { DashboardCategoryFilter } from "@/features/dashboard/components/dashboard-category-filter";
 import { DashboardHero } from "@/features/dashboard/components/dashboard-hero";
@@ -18,6 +18,13 @@ export function DashboardClient({
     useState<ServiceCategory | null>(null);
   const { services, loading, error, location, warnings } = useDashboardServices(initialLocation);
   const user = useAppStore((state) => state.user);
+  const setLocation = useAppStore((state) => state.setLocation);
+  const setServices = useAppStore((state) => state.setServices);
+
+  useEffect(() => {
+    setLocation(location);
+    setServices(services);
+  }, [location, services, setLocation, setServices]);
 
   function handleSelectCategory(category: ServiceCategory | null) {
     startTransition(() => {

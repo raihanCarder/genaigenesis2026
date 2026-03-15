@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchDashboardPayload } from "@/features/dashboard/api/dashboard-api";
+import {
+  fetchDashboardPayload,
+  getCachedDashboardPayload
+} from "@/features/dashboard/api/dashboard-api";
 import type { DashboardPayload, LocationContext } from "@/lib/types";
 
 export function useDashboardServices(location: LocationContext) {
@@ -11,12 +14,22 @@ export function useDashboardServices(location: LocationContext) {
 
   useEffect(() => {
     let cancelled = false;
+    const cached = getCachedDashboardPayload(location);
+
+    if (cached) {
+      setPayload(cached);
+      setLoading(false);
+      setError(null);
+      return () => {
+        cancelled = true;
+      };
+    }
 
     async function loadServices() {
       setLoading(true);
       setError(null);
       try {
-        const payload = await fetchDashboardPayload(location);
+        const payload = await fetchDashboardPayload(location, { preferCache: true });
         if (!cancelled) {
           setPayload(payload);
         }
