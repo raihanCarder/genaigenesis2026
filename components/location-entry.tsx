@@ -240,8 +240,8 @@ export function LocationEntry() {
     >
       <div className="grid gap-4">
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-black/65">
-            Enter a location
+          <span className="font-display text-base font-semibold tracking-[0.02em] text-white/82 md:text-lg">
+            Location:
           </span>
           <div className="relative">
             <MapPin
