@@ -18,19 +18,26 @@ interface NavBarProps {
   className?: string;
 }
 
+function getPathOnly(url: string) {
+  return url.split("?")[0]?.split("#")[0] ?? url;
+}
+
 function getActiveItem(items: NavItem[], pathname: string) {
   if (!items.length) {
     return null;
   }
 
   if (pathname.startsWith("/services/")) {
-    return items.find((item) => item.url === "/dashboard") ?? null;
+    return items.find((item) => getPathOnly(item.url) === "/dashboard") ?? null;
   }
 
   return (
-    items.find((item) => item.url === pathname) ??
-    items.find((item) => item.url !== "/" && pathname.startsWith(`${item.url}/`)) ??
-    (pathname === "/" ? items.find((item) => item.url === "/") ?? null : null)
+    items.find((item) => getPathOnly(item.url) === pathname) ??
+    items.find((item) => {
+      const itemPath = getPathOnly(item.url);
+      return itemPath !== "/" && pathname.startsWith(`${itemPath}/`);
+    }) ??
+    (pathname === "/" ? items.find((item) => getPathOnly(item.url) === "/") ?? null : null)
   );
 }
 

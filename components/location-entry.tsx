@@ -1,8 +1,10 @@
 "use client";
 
+import { MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
 import { TORONTO_CENTER } from "@/lib/adapters/google-maps";
+import { clearCachedDashboardPayload } from "@/features/dashboard/api/dashboard-api";
 import { fetchJson } from "@/lib/api/fetch-json";
 import { buildLocationSearchParams } from "@/lib/location";
 import {
@@ -118,6 +120,7 @@ export function LocationEntry() {
   }, [query, sessionToken]);
 
   async function pushLocation(location: LocationContext) {
+    clearCachedDashboardPayload(location);
     startTransition(() => {
       setLocation(location);
       router.push(buildDashboardHref(location));
@@ -145,17 +148,17 @@ export function LocationEntry() {
       body: JSON.stringify(input),
     });
     const resolved = LocationGeocodeResponseSchema.parse(payload);
-    await pushLocation(
-      toLocationContext({
-        latitude: resolved.latitude,
-        longitude: resolved.longitude,
-        label: resolved.label ?? resolved.normalizedLocation,
-        placeId: resolved.placeId,
-        city: resolved.city,
-        region: resolved.region,
-        country: resolved.country,
-      }),
-    );
+    const nextLocation = toLocationContext({
+      latitude: resolved.latitude,
+      longitude: resolved.longitude,
+      label: resolved.label ?? resolved.normalizedLocation,
+      placeId: resolved.placeId,
+      city: resolved.city,
+      region: resolved.region,
+      country: resolved.country,
+    });
+    setQuery(nextLocation.label);
+    await pushLocation(nextLocation);
   }
 
   async function submitTypedLocation() {
@@ -227,11 +230,6 @@ export function LocationEntry() {
     );
   }
 
-  function handleDemoLocation() {
-    resetAutocomplete();
-    void pushLocation(TORONTO_CENTER);
-  }
-
   const showSuggestions =
     inputFocused && (loadingSuggestions || suggestions.length > 0);
 
@@ -242,10 +240,14 @@ export function LocationEntry() {
     >
       <div className="grid gap-4">
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-black/65">
-            Enter a location
+          <span className="font-display text-base font-semibold tracking-[0.02em] text-white/82 md:text-lg">
+            Location:
           </span>
           <div className="relative">
+            <MapPin
+              aria-hidden="true"
+              className="pointer-events-none absolute left-5 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-black/45"
+            />
             <input
               value={query}
               onChange={(event) => {
@@ -303,7 +305,7 @@ export function LocationEntry() {
               autoComplete="off"
               aria-expanded={showSuggestions}
               aria-controls="location-suggestion-list"
-              className="w-full rounded-3xl border border-black bg-white px-5 py-4 text-black outline-none transition placeholder:text-black/45 focus:border-black"
+              className="w-full rounded-3xl border border-black bg-white py-4 pl-14 pr-5 text-black outline-none transition placeholder:text-black/45 focus:border-black"
             />
             {showSuggestions ? (
               <div
@@ -361,27 +363,20 @@ export function LocationEntry() {
             ) : null}
           </div>
         </label>
-        <div className="flex flex-col gap-3 md:flex-row">
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="submit"
             disabled={pending}
-            className="btn-primary rounded-full px-5 py-3 font-medium disabled:opacity-60"
+            className="btn-primary w-full rounded-full px-5 py-3 font-medium disabled:opacity-60"
           >
             {pending ? "Finding services..." : "Open dashboard"}
           </button>
           <button
             type="button"
             onClick={handleCurrentLocation}
-            className="btn-secondary rounded-full px-5 py-3 font-medium"
+            className="btn-secondary w-full rounded-full px-5 py-3 font-medium"
           >
             Use my location
-          </button>
-          <button
-            type="button"
-            onClick={handleDemoLocation}
-            className="btn-secondary rounded-full px-5 py-3 font-medium"
-          >
-            Load Toronto demo
           </button>
         </div>
         {error ? <p className="text-sm text-accentDark">{error}</p> : null}
