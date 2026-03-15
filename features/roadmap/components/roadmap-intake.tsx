@@ -20,9 +20,9 @@ export function RoadmapIntake({
 }) {
   return (
     <section className="glass-panel rounded-4xl p-6 shadow-card">
-      <p className="text-xs uppercase tracking-[0.22em] text-black/45">Roadmap intake</p>
+      <p className="text-xs uppercase tracking-[0.22em] text-white/45">Roadmap intake</p>
       <h1 className="font-display text-3xl font-semibold">Build a longer-term stability plan</h1>
-      <p className="mt-3 text-black/65">
+      <p className="mt-3 text-white/65">
         Start with the needs that matter most over the next few weeks.
       </p>
 
@@ -34,7 +34,7 @@ export function RoadmapIntake({
             onClick={() =>
               onNeedsChange(needs.includes(chip) ? needs : [...needs, chip])
             }
-            className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm transition hover:border-accent/30 hover:bg-accent/5"
+            className="btn-secondary rounded-full px-4 py-2 text-sm"
           >
             {chip}
           </button>
@@ -52,17 +52,16 @@ export function RoadmapIntake({
           )
         }
         rows={8}
-        className="mt-5 w-full rounded-3xl border border-black/10 bg-white px-5 py-4 outline-none transition focus:border-accent"
+        className="input-surface mt-5 w-full rounded-3xl px-5 py-4 outline-none transition"
       />
       <button
         type="button"
         onClick={onGenerate}
         disabled={loading}
-        className="mt-4 rounded-full bg-ink px-5 py-3 font-medium text-white transition hover:bg-accentDark disabled:opacity-60"
+        className="btn-primary mt-4 rounded-full px-5 py-3 font-medium disabled:opacity-60"
       >
         {loading ? "Building roadmap..." : "Generate roadmap"}
       </button>
     </section>
   );
 }
-

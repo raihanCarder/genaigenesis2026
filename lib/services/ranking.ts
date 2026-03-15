@@ -1,5 +1,12 @@
 import type { ServiceWithMeta } from "@/lib/types";
 
+const sourcePriority: Record<ServiceWithMeta["sourceType"], number> = {
+  manual: 10,
+  "open-data": 8,
+  scraped: 5,
+  maps: 2
+};
+
 export function scoreService(service: ServiceWithMeta, openNowPreference?: boolean) {
   let score = 0;
   if (openNowPreference && service.openNow) {
@@ -14,6 +21,7 @@ export function scoreService(service: ServiceWithMeta, openNowPreference?: boole
   if (service.freshnessState === "unknown") {
     score += 5;
   }
+  score += sourcePriority[service.sourceType] ?? 0;
   score += (service.confidenceScore ?? 0.5) * 50;
   return score;
 }
@@ -23,4 +31,3 @@ export function rankServices(services: ServiceWithMeta[], openNowPreference?: bo
     (left, right) => scoreService(right, openNowPreference) - scoreService(left, openNowPreference)
   );
 }
-

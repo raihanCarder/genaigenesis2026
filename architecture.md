@@ -1,239 +1,352 @@
 # Architecture
 
-### Parsing Rules
+## 1. Current System Snapshot
 
-- A `service` is any location-based resource, program, place, or event shown to the user.
-- A `dashboard` is the main browse experience organized by category.
-- A `chat response` is an AI answer grounded only in retrieved service data.
-- A `roadmap` is a logged-in planning feature that helps a user move toward longer-term stability across time horizons such as `this week`, `this month`, and `longer term`.
-- `MUST` means required behavior for the MVP.
-- `SHOULD` means strongly recommended behavior unless a constraint blocks it.
+Genesis Navigator is a Next.js 15 App Router application for finding nearby support services, asking grounded questions about those services, and, for signed-in users, generating a longer-term stability roadmap.
 
-## 2. Product Summary
+The current implementation is a Toronto-first demo:
 
-The product is a web project that helps people find nearby essential services and, for signed-in users, plan toward greater long-term stability.
+- the only bundled curated dataset is [`data/toronto/services.json`](data/toronto/services.json)
+- the default location fallback is downtown Toronto
+- helplines and copy are Toronto-specific
 
-Core value:
+Anonymous users can:
 
-- show nearby help fast
-- support natural-language questions
-- support longer-term planning for authenticated users
-- keep trust high by showing source and freshness metadata
+- set a location
+- browse the dashboard
+- open service detail pages
+- use grounded chat
 
-Primary resource types:
+Authenticated users can also:
 
-- food
-- showers
-- shelters
-- bathrooms
-- clinics
-- legal help
-- libraries, Wi-Fi, and charging
-- community services
+- generate a roadmap
+- save favorites in Supabase
 
-## 3. MVP Goals
+The app does not use a standalone backend service. Everything runs through Next.js route handlers plus server-side service modules.
 
-The MVP should:
+## 2. Stack
 
-- let a user enter a location or use device geolocation
-- show nearby services by category
-- support a grounded chatbot for questions about those services
-- support a roadmap feature for signed-in users focused on longer-term stability planning
-- optionally let a signed-in user save favorites
-- surface trust signals when data may be stale
+### Framework and UI
 
-## 4. Non-Goals for MVP
-
-The MVP does not need to include:
-
-- fully real-time shelter occupancy across all cities
-- complex case management workflows
-- native iOS or Android apps
-- multilingual support at launch
-- live route optimization
-- heavy agent orchestration frameworks
-
-## 5. Core User Needs
-
-The product is optimized for people who need help with immediate practical questions such as:
-
-- "Where can I get food tonight?"
-- "What shelter is closest?"
-- "What is open now?"
-- "Where can I shower before going to a shelter?"
-- "What support should I prioritize over the next few weeks?"
-
-The product should also be usable by helpers, volunteers, or outreach workers who are searching on someone else's behalf.
-
-## 6. Core Features
-
-### 6.1 Location-Based Dashboard
-
-The dashboard is the primary experience.
-
-It MUST:
-
-- load after the user sets a location
-- organize results by category
-- show practical service cards
-- keep the current location visible
-- expose help lines and emergency contacts
-
-### 6.2 Grounded AI Chatbot
-
-The chatbot is a support layer on top of retrieved service data.
-
-It MUST:
-
-- answer only from backend-provided services
-- recommend actual services from the current context
-- explain uncertainty when data is incomplete or stale
-- avoid inventing facts such as hours, eligibility, or capacity
-
-### 6.3 Logged-In Stability Roadmap
-
-The roadmap is a planning layer for authenticated users who want to work toward greater stability over time.
-
-It MUST:
-
-- require login
-- accept a short need summary or simple intake answers
-- produce a staged plan such as `this week`, `this month`, and `longer term`
-- connect each step to actual services when available
-- focus on stabilization goals rather than only same-day triage
-- call out verification needs for time-sensitive resources
-
-### 6.4 Optional Auth and Favorites
-
-Authentication is optional for browsing and chat, but it is required for roadmap planning and favorites.
-
-If enabled, users can:
-
-- access the roadmap feature
-- save favorites
-- keep recent searches
-- keep preferred locations
-
-### 6.5 Freshness and Trust Layer
-
-Time-sensitive services need explicit trust handling.
-
-The system SHOULD:
-
-- store source metadata
-- store last verification time when known
-- mark stale or unknown records clearly
-- tell the user when they should call first or verify before traveling
-
-## 7. High-Level System Overview
-
-```text
-[ Web Browser ]
-        |
-        v
-[ Next.js Frontend ]
-  - location input
-  - dashboard
-  - chat UI
-  - authenticated roadmap UI
-  - favorites UI
-        |
-        v
-[ Next.js API Layer ]
-  - geocoding
-  - service retrieval
-  - filtering and ranking
-  - AI prompt building
-  - authenticated roadmap generation
-  - favorites endpoints
-    /           |             \
-   v            v              v
-[ Google ]  [ Service Store ] [ Gemini API ]
-[ Maps   ]  [ normalized data ] [ grounded AI ]
-
-Optional:
-[ Firebase Auth + Firestore ]
-```
-
-## 8. Technology Choices
-
-### Frontend
-
-- Next.js
+- Next.js 15
+- React 19
 - TypeScript
 - Tailwind CSS
-- responsive web app layout
-- optional component library such as `shadcn/ui`
+- Zustand for lightweight client state
+- Framer Motion and Lucide React for UI polish
 
-### Backend
+### External integrations
 
-- Next.js route handlers or API routes
-- TypeScript
-- server-side service retrieval and AI orchestration
+- Google Maps / Places for geocoding, autocomplete, place details, and supplemental place search
+- Gemini for grounded chat, roadmap generation, and trusted-page extraction
+- Brave Search for trusted web discovery
+- Supabase Auth and Postgres for authentication and favorites
 
-### Auth and Persistence
+### Testing and tooling
 
-- Firebase Authentication
-- Firestore for favorites and lightweight user metadata
+- Vitest
+- Testing Library
 
-### Maps and Location
+## 3. High-Level Runtime Topology
 
-- Google Maps Platform
-- Geocoding API
-- Places API
-- Maps JavaScript API
-- optional Routes API
+```text
+[ Browser ]
+    |
+    v
+[ Next.js App Router ]
+  - server pages
+  - client components
+  - middleware
+    |
+    +--> [ Zustand app store ]
+    |
+    +--> [ Route handlers under /app/api ]
+              |
+              +--> [ lib/services/* ]
+              |      - dashboard assembly
+              |      - search
+              |      - ranking
+              |      - favorites store
+              |
+              +--> [ lib/adapters/google-maps.ts ]
+              +--> [ lib/adapters/web-discovery.ts ]
+              +--> [ lib/adapters/gemini.ts ]
+              +--> [ lib/supabase/* ]
+              +--> [ data/toronto/services.json ]
+```
 
-### AI
+The app has no background jobs, queue workers, or persistent cache layer. Request-time composition is the dominant pattern.
 
-- Gemini API
-- structured prompts
-- structured JSON outputs
+## 4. Project Structure
 
-### Data Sources
+```text
+app/
+  api/                    HTTP route handlers
+  auth/callback/          Supabase auth callback exchange
+  dashboard/              dashboard page
+  chat/                   grounded chat page
+  plan/                   roadmap page
+  saved/                  favorites page
+  services/[id]/          service detail page
 
-- curated service dataset
-- manually entered demo data
-- lightweight scraped nonprofit or city pages
-- optional city open-data feeds
-- Google Maps public place data where relevant
+components/               shared client components
+features/dashboard/       dashboard-specific UI, hooks, API helpers
+features/roadmap/         roadmap-specific UI, hooks, API helpers
+lib/
+  adapters/               Google Maps, Gemini, Brave, web discovery, Supabase mapping
+  services/               dashboard assembly, ranking, normalization, favorites
+  supabase/               browser/server/middleware helpers
+  constants/              categories and helplines
+  types.ts                zod schemas and shared contracts
+store/                    Zustand app store
+data/toronto/             curated service seed
+supabase/                 SQL schema for favorites
+```
 
-## 9. Component Responsibilities
+`components/dashboard-client.tsx` and `components/roadmap-client.tsx` are compatibility re-exports; the real implementations live under `features/`.
 
-### 9.1 Frontend Responsibilities
+## 5. User-Facing Routes
 
-The frontend SHOULD:
+### Public routes
 
-- collect and store the current location
-- render category rows and service cards
-- open chat with current context
-- open roadmap builder only for authenticated users
-- show trust warnings and help lines
-- support optional favorites for signed-in users
+- `/`
+  - landing page with `LocationEntry`
+  - supports typed location, autocomplete, and browser geolocation
+- `/dashboard`
+  - main browse experience
+  - loads the assembled dashboard payload for the current location
+- `/chat`
+  - grounded chat over the currently loaded service set
+- `/services/[id]`
+  - service detail page
+  - resolves a service from curated data, supplemental search, or dashboard payload lookup
 
-### 9.2 Backend Responsibilities
+### Auth-sensitive routes
 
-The backend MUST:
+- `/plan`
+  - roadmap generation UI
+  - protected by middleware and also guarded in the client component
+- `/saved`
+  - favorites list
+  - protected by middleware and also guarded in the client component
 
-- geocode location input
-- retrieve and normalize services from supported sources
-- filter by category, radius, and optionally `openNow`
-- rank services for dashboard, chat, and roadmap use
-- build grounded AI context
-- validate and parse structured AI responses
-- enforce authentication for roadmap and favorites endpoints
-- store and retrieve favorites if auth is enabled
+### Auth callback
 
-### 9.3 External Service Responsibilities
+- `/auth/callback`
+  - exchanges Supabase auth code for a session
+  - redirects back to the original path via `next`
 
-- Google Maps provides geocoding, directions, and some public-place coverage.
-- Curated and scraped data provides social-service coverage that maps alone will miss.
-- Gemini provides explanation and planning, but never acts as the source of truth for service facts.
-- Firebase provides optional identity and persistence.
+## 6. Frontend Architecture
 
-## 10. Canonical Domain Model
+### 6.1 Root layout
 
-### 10.1 Service Categories
+`app/layout.tsx` wraps the app with:
+
+- `Providers`
+- `TopNav`
+- the route content area
+
+### 6.2 Client state
+
+The Zustand store in `store/app-store.ts` holds:
+
+- `location`
+- `services`
+- `selectedCategory`
+- `user`
+- `authReady`
+
+In practice:
+
+- location and services are the most important shared client state
+- dashboard category filtering is currently local to the dashboard client
+- auth state is hydrated from Supabase in `components/providers.tsx`
+
+### 6.3 Auth hydration
+
+`Providers` does the client-side auth bootstrap:
+
+- creates the browser Supabase client if env vars exist
+- calls `supabase.auth.getUser()`
+- subscribes to `onAuthStateChange`
+- maps the Supabase user into the app store
+- refreshes the router when auth state changes
+
+### 6.4 Main client entry points
+
+- `components/location-entry.tsx`
+  - location input, autocomplete, geolocation, and initial navigation
+- `features/dashboard/components/dashboard-client.tsx`
+  - fetches dashboard data through `useDashboardServices`
+  - renders warnings, category filter, service sections, and helplines
+- `components/chat-client.tsx`
+  - fetches dashboard payload for context
+  - stores services and location in Zustand
+  - submits grounded chat requests
+- `features/roadmap/components/roadmap-client.tsx`
+  - loads services for roadmap generation
+  - renders intake and results panes
+- `components/saved-client.tsx`
+  - loads saved service snapshots from `/api/favorites`
+
+## 7. Middleware and Request Gating
+
+`middleware.ts` delegates to `lib/supabase/middleware.ts`.
+
+Current middleware responsibilities:
+
+- redirect any request containing a Supabase `code` query param to `/auth/callback`
+- protect `/plan` and `/saved`
+- redirect unauthenticated users for protected pages back to `/`
+
+This means protected pages are enforced before page rendering, not only inside API routes.
+
+## 8. API Surface
+
+The shared contracts for these routes live in `lib/types.ts`.
+
+### `GET /api/location/autocomplete`
+
+Purpose:
+
+- location suggestions for the landing-page search box
+
+Behavior:
+
+- requires at least 2 characters
+- uses Google Places autocomplete when configured
+- falls back to a small Toronto-centric suggestion set otherwise
+
+### `POST /api/location/geocode`
+
+Purpose:
+
+- convert user input, place id, or coordinates into a normalized `LocationContext`
+
+Accepted inputs:
+
+- `location`
+- `placeId`
+- `latitude` and `longitude`
+- optional `label`
+
+Behavior:
+
+- prefers Google geocoding and place details when available
+- falls back to Toronto defaults or the raw coordinates if Google is unavailable
+
+### `GET /api/dashboard`
+
+Purpose:
+
+- return the full dashboard payload
+
+Query params:
+
+- `lat`
+- `lng`
+- optional `label`
+- optional `placeId`
+- optional `city`
+- optional `region`
+- optional `country`
+- optional `radius`
+
+Returns:
+
+- `DashboardPayload`
+
+### `GET /api/services`
+
+Purpose:
+
+- raw service search endpoint
+- detail lookup by `id`
+
+Query params:
+
+- `lat`
+- `lng`
+- optional `id`
+- optional `category`
+- optional `radius`
+- optional `openNow`
+
+Notes:
+
+- `lat` and `lng` are currently required even when `id` is provided
+- this endpoint uses a simpler retrieval pipeline than `/api/dashboard`
+
+### `POST /api/chat`
+
+Purpose:
+
+- grounded chat response over the current service context
+
+Input:
+
+- `message`
+- `location`
+- optional `selectedCategory`
+- `services`
+
+Behavior:
+
+- validates input with zod
+- truncates services to 12 before passing them to Gemini
+- returns `ChatResponse`
+
+### `POST /api/roadmap`
+
+Purpose:
+
+- authenticated roadmap generation
+
+Input:
+
+- `needs`
+- optional `constraints`
+- `location`
+- `services`
+
+Behavior:
+
+- requires an authenticated Supabase user
+- truncates services to 12
+- returns `RoadmapResponse`
+
+### `GET /api/favorites`
+
+Purpose:
+
+- list saved services for the authenticated user
+
+Behavior:
+
+- returns parsed service snapshots from Supabase
+
+### `POST /api/favorites`
+
+Purpose:
+
+- save or remove a favorite
+
+Input:
+
+- `serviceId`
+- `action: "save" | "remove"`
+- `service` snapshot when saving
+
+Behavior:
+
+- requires auth
+- persists the full service snapshot, not just the id
+
+## 9. Canonical Domain Model
+
+The source of truth is `lib/types.ts`.
+
+### 9.1 Categories
 
 ```ts
 type ServiceCategory =
@@ -248,566 +361,358 @@ type ServiceCategory =
   | "wifi-charging";
 ```
 
-### 10.2 Source and Freshness Types
-
-```ts
-type SourceType = "maps" | "scraped" | "manual" | "open-data";
-
-type FreshnessState = "fresh" | "stale" | "unknown";
-```
-
-### 10.3 Service Schema
+### 9.2 Service shape
 
 ```ts
 type Service = {
   id: string;
   name: string;
   category: ServiceCategory;
-  subcategory?: string;
-  description?: string;
   address: string;
   latitude: number;
   longitude: number;
+  placeId?: string;
+  description?: string;
   phone?: string;
   website?: string;
   hoursText?: string;
   openNow?: boolean;
   eligibilityNotes?: string;
   tags?: string[];
-  sourceType: SourceType;
+  sourceType: "maps" | "scraped" | "manual" | "open-data";
   sourceName?: string;
   sourceUrl?: string;
   lastVerifiedAt?: string;
-  freshnessState?: FreshnessState;
+  freshnessState?: "fresh" | "stale" | "unknown";
   confidenceScore?: number;
 };
-```
 
-### 10.4 User and Favorites Schema
-
-```ts
-type AppUser = {
-  id: string;
-  displayName?: string;
-  preferredCity?: string;
-  createdAt: string;
-};
-
-type Favorite = {
-  id: string;
-  userId: string;
-  serviceId: string;
-  savedAt: string;
+type ServiceWithMeta = Service & {
+  distanceMeters?: number;
 };
 ```
 
-### 10.5 AI Response Schemas
+### 9.3 Other important contracts
 
-```ts
-type ChatRecommendation = {
-  serviceId: string;
-  reason: string;
-};
-
-type ChatResponse = {
-  summary: string;
-  recommendedServices: ChatRecommendation[];
-  nextSteps: string[];
-  verificationWarning?: string;
-};
-
-type RoadmapStep = {
-  serviceId?: string;
-  reason: string;
-};
-
-type RoadmapResponse = {
-  situationSummary: string;
-  thisWeek: RoadmapStep[];
-  thisMonth: RoadmapStep[];
-  longerTerm: RoadmapStep[];
-  notes: string[];
-  verificationWarnings?: string[];
-};
-```
-
-## 11. API Contracts
-
-### 11.1 `POST /api/location/geocode`
-
-Purpose:
-
-- convert user-entered location text into normalized coordinates
-
-Input:
-
-```json
-{
-  "location": "Downtown Toronto"
-}
-```
-
-Output:
-
-```json
-{
-  "normalizedLocation": "Downtown Toronto, Toronto, ON, Canada",
-  "latitude": 43.6532,
-  "longitude": -79.3832
-}
-```
-
-### 11.2 `GET /api/services`
-
-Purpose:
-
-- return nearby services filtered by category and optional constraints
-
-Query params:
-
-- `lat`
-- `lng`
-- `category`
-- `radius`
-- `openNow`
-
-Output:
-
-- array of normalized `Service` records
-
-### 11.3 `POST /api/chat`
-
-Purpose:
-
-- generate a grounded answer over the current service context
-
-Input:
-
-```json
-{
-  "message": "Where can I get free food tonight?",
-  "location": {
-    "latitude": 43.6532,
-    "longitude": -79.3832
-  },
-  "selectedCategory": "food",
-  "services": []
-}
-```
-
-Output:
-
+- `LocationContext`
+  - lat/lng, display label, optional place and region metadata
+- `LocationPlaceMetadata`
+  - Google place details used as dashboard anchor context
+- `DashboardPayload`
+  - resolved location, optional anchor place, services, warnings
 - `ChatResponse`
-
-### 11.4 `POST /api/roadmap`
-
-Purpose:
-
-- generate a staged stability plan for an authenticated user from their needs and relevant services
-
-Auth:
-
-- required
-
-Input:
-
-```json
-{
-  "needs": [
-    "replace ID",
-    "find more stable housing support",
-    "build a plan for regular food access"
-  ],
-  "constraints": {
-    "hasId": false,
-    "walkingOnly": true
-  },
-  "location": {
-    "latitude": 43.6532,
-    "longitude": -79.3832
-  },
-  "services": []
-}
-```
-
-Output:
-
+  - summary, recommended services, next steps, verification warning
 - `RoadmapResponse`
+  - situation summary, `thisWeek`, `thisMonth`, `longerTerm`, notes, verification warnings
 
-### 11.5 `GET /api/favorites`
+## 10. Service Data Pipeline
 
-Purpose:
+### 10.1 Curated seed data
 
-- return saved services for the authenticated user
+Curated records come from `data/toronto/services.json`.
 
-Output:
+`lib/services/normalization.ts`:
 
-- array of saved service references or hydrated `Service` records
+- parses the seed with `ServiceSchema`
+- computes `freshnessState` from `lastVerifiedAt`
+- returns the normalized records as the local baseline dataset
 
-### 11.6 `POST /api/favorites`
+### 10.2 Google Maps adapter
 
-Purpose:
-
-- save or remove a favorite service for the authenticated user
-
-Input:
-
-```json
-{
-  "serviceId": "svc_123"
-}
-```
-
-Output:
-
-```json
-{
-  "ok": true
-}
-```
-
-## 12. AI Behavior Contract
-
-### 12.1 Inputs to the Model
-
-The model should receive:
-
-- user message or user need summary
-- current location
-- current category when relevant
-- a bounded list of relevant services
-- freshness and confidence metadata
-
-### 12.2 Hard Rules
-
-The model MUST:
-
-- use only provided services as factual grounding
-- never invent service names, locations, hours, or eligibility rules
-- prefer direct and respectful language
-- prioritize urgency, distance, and likely usefulness
-- return structured JSON only
-- include verification guidance when service data is stale or uncertain
-
-The model MUST NOT:
-
-- claim live capacity unless provided explicitly
-- imply certainty where data is incomplete
-- recommend impossible actions that conflict with user constraints
-
-### 12.3 Chat Ranking Logic
-
-For chat responses, ranking SHOULD prefer:
-
-1. services matching the requested category
-2. services open now when that matters
-3. closer services
-4. higher-confidence services
-5. services with clearer instructions or contact info
-
-### 12.4 Roadmap Planning Logic
-
-For roadmap responses, planning SHOULD:
-
-1. support stabilization and future planning, while still acknowledging urgent blockers
-2. separate actions into time buckets such as `this week`, `this month`, and `longer term`
-3. attach concrete services wherever possible
-4. mention when the user should call first or verify before traveling
-
-## 13. Data Ingestion and Normalization
-
-### 13.1 Why a Hybrid Data Model Is Required
-
-Google Maps is useful but incomplete for community support services.
-
-Maps is stronger for:
+`lib/adapters/google-maps.ts` provides:
 
 - geocoding
-- directions
-- public buildings
-- libraries
-- some clinics
-- some bathrooms and community spaces
+- autocomplete
+- place details
+- text-based place matching
+- category-based supplemental place search
+- Google Maps directions URL generation
 
-Curated and scraped data is stronger for:
+Key implementation details:
 
-- shelters
-- food programs
-- free food events
-- showers
-- legal aid
-- nonprofit support services
-- warming or cooling centers
+- supports `legacy` and `new` Places API modes via `GOOGLE_PLACES_API_FLAVOR`
+- uses in-memory TTL caches
+- falls back gracefully when Google is unavailable
+- can temporarily disable Places usage after request-denied style failures
 
-### 13.2 MVP Ingestion Strategy
+### 10.3 Trusted web discovery
 
-For hackathon speed, the system SHOULD use:
+`lib/adapters/web-discovery.ts` augments dashboard results with scraped candidates from trusted pages.
 
-- `services.json` as the canonical seed dataset
-- optional lightweight scrape scripts before demo day
-- a single normalization step into the shared `Service` schema
+Pipeline:
 
-### 13.3 Required Metadata
+1. Brave Search finds candidate pages for supported categories.
+2. URLs are filtered to trusted domains and paths.
+3. Pages are fetched and reduced to plain text.
+4. Gemini extracts structured candidate services from page text.
+5. Extracted candidates are validated against Google geocoding or place lookup.
+6. Validated services are returned as `sourceType: "scraped"`.
 
-Each normalized service SHOULD include:
+Current trusted web discovery categories:
 
-- source type
-- source name
-- source URL when available
-- last verified timestamp when available
-- confidence score when available
+- `food`
+- `free-food-events`
+- `showers`
+- `shelters`
+- `services`
+- `clinics`
 
-### 13.4 Freshness Rules
+If Brave or Gemini is missing, the dashboard still works and returns warnings instead of discovered services.
 
-Suggested default freshness behavior:
+## 11. Dashboard Assembly
 
-- `fresh`: record verified within the expected window
-- `stale`: record is older than the expected window
-- `unknown`: no verification timestamp exists
+`lib/services/dashboard.ts` is the highest-level service retrieval pipeline in the repo.
 
-Suggested windows:
+Current flow:
 
-- shelters, food events, warming centers: 7 days
-- general services and clinics: 30 days
+1. Resolve the user location through `geocodeLocation`.
+2. Fetch `anchorPlace` details when a place id exists.
+3. Load curated services.
+4. Load Google supplemental places for selected dashboard categories.
+5. Run trusted web discovery with a 7 second timeout.
+6. Merge and deduplicate all services.
+7. Add distance from the resolved location.
+8. Filter within radius.
+9. Rank services.
+10. Limit to 7 services per category.
+11. Return warnings alongside the services.
 
-If a record is `stale` or `unknown`, the UI and AI SHOULD say some version of:
+Current dashboard categories loaded from Google Places:
 
-- "Verify before traveling"
-- "Hours may be outdated"
-- "Call first if possible"
+- `food`
+- `free-food-events`
+- `shelters`
+- `showers`
+- `services`
+- `clinics`
+- `bathrooms`
+- `wifi-charging`
 
-## 14. Core User Flows
+Important merge rules:
 
-### 14.1 Entry Flow
+- source priority favors `manual` over `open-data`, `scraped`, then `maps`
+- Google data is preferred for precise coordinates, phone, website, and `openNow`
+- scraped data is preferred for descriptions, hours text, eligibility notes, and source URLs
 
-1. User lands on the welcome screen.
-2. User enters a location or uses device geolocation.
-3. Frontend calls geocoding.
-4. Location is stored in shared state.
-5. User is routed to the dashboard.
+The dashboard is the richest retrieval path in the app.
 
-### 14.2 Dashboard Flow
+## 12. Search and Detail Retrieval
 
-1. Frontend requests nearby services by category.
-2. Backend merges and normalizes data.
-3. Frontend renders category rows and service cards.
-4. User can tap a category, service, chat, or the logged-in roadmap entry point.
+`lib/services/query.ts` powers `/api/services` and some service detail fallback logic.
 
-### 14.3 Chat Flow
+### `searchServices`
 
-1. User opens chat from the dashboard or a service detail.
-2. Frontend sends the current message plus relevant services.
-3. Backend builds a grounded prompt.
-4. Gemini returns structured JSON.
-5. Frontend renders the answer and links to recommended services.
+This is a lighter-weight retrieval path than dashboard assembly:
 
-### 14.4 Roadmap Flow
+- loads curated services
+- loads Google supplemental places
+- adds distance
+- deduplicates by normalized `name + address`
+- filters by category, radius, and optional `openNow`
+- ranks results
 
-1. User signs in and opens roadmap mode.
-2. User provides a short need summary or answers a few intake prompts.
-3. Backend collects relevant services.
-4. Gemini returns a structured staged plan.
-5. Frontend renders the plan with service links and verification notes.
+Differences from the dashboard pipeline:
 
-### 14.5 Favorites Flow
+- no trusted web discovery
+- default radius is 5000 meters instead of 6000
+- per-category limiting is not applied the same way
 
-1. User signs in if they want persistence.
-2. User saves a service.
-3. Backend writes to Firestore.
-4. Saved services are available in a future session.
+### `getServiceById`
 
-## 15. UI Architecture
+Lookup order:
 
-### 15.1 Welcome Screen
+1. curated seed
+2. `searchServices`
+3. `findDashboardServiceById`
 
-Purpose:
+This is why detail pages can still resolve services that only appear after dashboard assembly.
 
-- establish location context immediately
+## 13. Ranking and Trust
 
-Required elements:
+`lib/services/ranking.ts` scores services using:
 
-- app name
-- short product description
-- location input
-- "Use my location" action
-- continue action
+- `openNow`
+- distance
+- freshness state
+- source priority
+- confidence score
 
-### 15.2 Dashboard Screen
+`lib/services/freshness.ts` computes freshness using category-specific windows:
 
-Purpose:
+- 7 days for shelters and free-food events
+- 14 days for food and showers
+- 30 days for clinics, services, legal-help, bathrooms, and wifi-charging
 
-- show nearby help quickly by category
+Trust is surfaced in the UI through:
 
-Required elements:
+- warnings from the dashboard payload
+- freshness labels on service cards
+- source metadata on detail pages
+- explicit verification messaging in chat and roadmap responses
 
-- current location near the top
-- chat entry point
-- optional auth or profile entry point
-- category rows or cards
-- service cards with practical metadata
-- footer with help lines and emergency context
+## 14. AI Architecture
 
-### 15.3 Service Detail Screen
+`lib/adapters/gemini.ts` is used in three places:
 
-Purpose:
+- grounded chat generation
+- roadmap generation
+- trusted web page extraction
 
-- show the full details for a selected service
+### 14.1 Grounded chat
 
-Required elements:
+`generateGroundedChat`:
 
-- name
-- category
-- address
-- hours
-- phone
-- source metadata
-- directions action
-- save action if logged in
-- "Ask AI about this place" action
+- builds a compact summary of up to 10 services
+- sends a strict JSON prompt to Gemini
+- validates the result with `ChatResponseSchema`
+- removes recommended service ids that are not in the provided context
 
-### 15.4 Chat Screen or Panel
+If Gemini is unavailable or fails:
 
-Purpose:
+- the app falls back to a deterministic response assembled from the top nearby services
 
-- answer questions using the current service context
+### 14.2 Roadmap generation
 
-Required elements:
+`generateRoadmap`:
 
-- chat history
-- input field
-- suggested prompt chips
-- responses linked to service cards
+- takes user needs, optional constraints, and up to 12 services
+- requests strict JSON
+- validates with `RoadmapResponseSchema`
+- strips unknown service ids from the generated steps
 
-### 15.5 Roadmap Screen
+If Gemini is unavailable or fails:
 
-Purpose:
+- the app falls back to a deterministic roadmap built from nearby services
 
-- show a multi-step stability plan for an authenticated user
+### 14.3 AI constraints
 
-Required elements:
+The current code enforces these constraints mainly through prompt design and output validation:
 
-- user situation summary
-- sections for `this week`, `this month`, and `longer term`
-- linked services
-- verification notes
+- only use provided services as factual grounding
+- return strict JSON
+- do not invent service ids
 
-### 15.6 Navigation
+There is no streaming, tool calling, or multi-step agent orchestration.
 
-For MVP, a simple bottom nav can be:
+## 15. Authentication and Persistence
 
-- Home
-- Chat
-- Help
+### 15.1 Supabase auth
 
-If the user is signed in, add:
+The app uses `@supabase/ssr` for both browser and server clients.
 
-- Plan
-- Saved
+Current auth flow:
 
-## 16. Reliability, Safety, and Privacy
+1. The browser opens the email/password auth modal.
+2. Sign-in and sign-up run against Supabase Auth.
+3. Supabase session cookies are read on the server.
+4. Middleware and route handlers use those cookies to enforce access.
+5. `Providers` mirrors the current session into Zustand for the client UI.
 
-### 16.1 Reliability
+Current auth methods:
 
-The product SHOULD:
+- email + password sign up
+- email + password sign in
+- sign out
 
-- show source metadata when available
-- flag stale records clearly
-- return graceful empty states when no services are found
-- keep help lines visible even when data is sparse
+No social providers are implemented in the current codebase.
 
-### 16.2 Safety
+### 15.2 Favorites persistence
 
-The product SHOULD:
+Favorites live in Supabase Postgres.
 
-- avoid overclaiming certainty
-- steer users to call first for volatile services
-- keep emergency or crisis contact information easy to access
+Schema source:
 
-### 16.3 Privacy and Security
+- `supabase/favorites.sql`
 
-The product MUST:
+Table shape:
 
-- store secrets server-side where possible
-- restrict Maps keys by domain and allowed APIs
-- scope saved data to authenticated users
-- keep auth optional for browsing and chat
-- require auth for roadmap and favorites flows
+- `user_id`
+- `service_id`
+- `service_snapshot`
+- `saved_at`
 
-The MVP SHOULD avoid collecting more personal data than necessary.
+Important design choice:
 
-## 17. Failure and Fallback Behavior
+- favorites store the full `service_snapshot` JSON so saved items remain renderable even if live search results change later
 
-If no matching services are found:
+RLS policies restrict reads and writes to the owning authenticated user.
 
-- show nearby general help lines
-- suggest broadening radius or removing filters
-- allow the chatbot to explain that the current dataset has no matching results
+## 16. Environment Variables
 
-If AI fails:
+Validated in `lib/env.ts`.
 
-- keep dashboard browsing fully usable
-- show a simple fallback message
-- avoid blocking the user from core service discovery
+### Server-side
 
-If geolocation fails:
+- `GOOGLE_MAPS_API_KEY`
+- `GOOGLE_PLACES_API_FLAVOR` with default `legacy`
+- `BRAVE_SEARCH_API_KEY`
+- `GEMINI_API_KEY`
+- `GEMINI_MODEL` with default `gemini-2.5-flash`
 
-- allow manual location entry
-- keep the rest of the flow unchanged
+### Client-visible
 
-## 18. Scalability Path
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-This architecture can expand into:
+Current behavior when env vars are missing:
 
-- more cities
-- provider dashboards
-- stronger live-data integrations
-- multilingual support
-- route optimization
-- SMS access
-- native mobile clients
-- caseworker mode
+- no Google Maps key: location and autocomplete fall back to Toronto-centric behavior; supplemental place search is disabled
+- no Brave key: trusted web discovery is disabled
+- no Gemini key: chat, roadmap, and discovery extraction fall back to deterministic behavior or no-op warnings
+- no Supabase config: auth UI is disabled and protected features are unavailable
 
-## 19. Recommended MVP Build Order
+## 17. Caching, Timeouts, and Resilience
 
-### Phase 1
+The app relies on short-lived in-memory caches inside adapter modules.
 
-- Next.js project setup
-- welcome screen
-- location input and geocoding
-- dashboard shell
+Current cache usage:
 
-### Phase 2
+- Google geocoding and Places lookups
+- Brave Search results
+- page text for trusted discovery
+- overall trusted discovery results
 
-- seed dataset
-- service normalization
-- category rows
-- service cards
-- help-line footer
+Common properties:
 
-### Phase 3
+- 5 minute TTL
+- process-local only
+- lost on restart or across server instances
 
-- grounded Gemini chatbot
-- response parsing
-- linked service recommendations
+Notable timeouts:
 
-### Phase 4
+- Google fetches: 4 seconds
+- Brave Search: 4 seconds
+- page fetch for discovery: 3.5 seconds
+- Gemini extraction for discovery: 4 seconds
+- dashboard web discovery wrapper: 7 seconds
 
-- Firebase auth
-- authenticated roadmap builder
-- intake prompts
-- staged plan screen
+Logging is currently thin and goes through `console.info` / `console.error` wrappers in `lib/logger.ts`.
 
-### Phase 5
+## 18. Current Known Gaps
 
-- favorites
-- polish and demo preparation
+These are real characteristics of the current implementation and should be treated as architecture notes, not aspirational goals.
 
-## 20. Final Summary
+- The app is still Toronto-first even though the location input is generic.
+- The only bundled seed dataset is Toronto.
+- `legal-help` exists in shared types, but the dashboard pipeline does not currently load that category by default.
+- `/api/services` and `/api/dashboard` use different retrieval pipelines, so results can differ between raw search and the main dashboard.
+- Favorites are persisted correctly, but `FavoriteButton` does not hydrate its initial saved state from the server, so cards do not know they are already saved.
+- Recent searches and preferred locations are not persisted yet.
+- There is no durable cache, background verification job, or real-time service freshness pipeline.
+- AI features are request/response only and depend on synchronous external calls.
 
-The MVP is a web-based support navigator with three main layers:
+## 19. Practical Summary
 
-1. a dashboard for nearby services
-2. a grounded chatbot for natural-language guidance
-3. a logged-in roadmap feature for longer-term stability planning
+Today the codebase is organized around one central idea:
 
-The dashboard is the core product. AI is an assistive layer, not the source of truth. The roadmap is a signed-in planning feature aimed at helping someone move toward greater stability over time. Trust is maintained through source metadata, freshness handling, and explicit uncertainty when data may be incomplete.
+- build a dashboard payload for a location by combining curated Toronto services, Google place search, and optional trusted web discovery
+
+Everything else is layered on top of that:
+
+- chat reasons over the current dashboard context
+- roadmap generation reuses nearby services but requires auth
+- service details resolve individual records from the same retrieval stack
+- favorites store snapshots of those records in Supabase
+
+This is the current architecture as implemented, not the original MVP plan.

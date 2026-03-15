@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getFirebaseClientAuth } from "@/lib/adapters/firebase-client";
+import { useState } from "react";
 import type { ServiceWithMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
@@ -14,19 +13,13 @@ export function FavoriteButton({
   compact?: boolean;
 }) {
   const user = useAppStore((state) => state.user);
-  const [saved, setSaved] = useState(false);
+  const saved = useAppStore((state) => state.favoriteServiceIds.includes(service.id));
+  const favoritesReady = useAppStore((state) => state.favoritesReady);
+  const setFavoriteSaved = useAppStore((state) => state.setFavoriteSaved);
   const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    setSaved(false);
-  }, [user?.uid, service.id]);
-
   async function handleToggle() {
-    if (!user) {
-      return;
-    }
-    const token = await getFirebaseClientAuth()?.currentUser?.getIdToken();
-    if (!token) {
+    if (!user || !favoritesReady) {
       return;
     }
     setPending(true);
@@ -35,8 +28,7 @@ export function FavoriteButton({
       const response = await fetch("/api/favorites", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           action,
@@ -47,7 +39,7 @@ export function FavoriteButton({
       if (!response.ok) {
         throw new Error("Unable to update favorite.");
       }
-      setSaved(!saved);
+      setFavoriteSaved(service.id, !saved);
     } finally {
       setPending(false);
     }
@@ -59,11 +51,11 @@ export function FavoriteButton({
         type="button"
         disabled
         className={cn(
-          "rounded-full border border-black/10 bg-black/5 px-3 py-2 text-xs text-black/50",
+          "btn-secondary rounded-full px-3 py-2 text-xs text-white/50",
           compact && "px-2.5 py-1.5"
         )}
       >
-        Sign in to save
+        Log in to save
       </button>
     );
   }
@@ -72,14 +64,13 @@ export function FavoriteButton({
     <button
       type="button"
       onClick={handleToggle}
-      disabled={pending}
+      disabled={pending || !favoritesReady}
       className={cn(
-        "rounded-full border border-accent/25 bg-white px-3 py-2 text-xs font-medium text-accentDark transition hover:border-accent hover:bg-accent/10 disabled:opacity-60",
+        "rounded-full border border-accent/35 bg-accent/10 px-3 py-2 text-xs font-medium text-accentDark transition hover:bg-accent/15 disabled:opacity-60",
         compact && "px-2.5 py-1.5"
       )}
     >
-      {pending ? "Saving..." : saved ? "Saved" : "Save"}
+      {pending ? saved ? "Removing..." : "Saving..." : !favoritesReady ? "Loading..." : saved ? "Saved" : "Save"}
     </button>
   );
 }
-
