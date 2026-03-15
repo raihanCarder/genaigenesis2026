@@ -3,7 +3,7 @@ import { LocationEntry } from "@/components/location-entry";
 export default function HomePage() {
   return (
     <div className="grid-lines">
-      <section className="mx-auto flex min-h-[calc(100vh-72px)] max-w-6xl flex-col justify-center gap-10 px-4 py-12 md:px-6">
+      <section className="mx-auto flex min-h-[calc(100vh-12rem)] max-w-6xl flex-col justify-center gap-10 px-4 py-12 md:min-h-[calc(100vh-10rem)] md:px-6">
         <div className="max-w-3xl">
           <p className="text-sm uppercase tracking-[0.28em] text-white/48">
             Toronto demo MVP
