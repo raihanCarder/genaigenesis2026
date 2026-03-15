@@ -2,6 +2,7 @@
 
 import { startTransition, useState } from "react";
 import { HelplineFooter } from "@/components/helpline-footer";
+import { BouncingDots } from "@/components/ui/bouncing-dots";
 import { DashboardCategoryFilter } from "@/features/dashboard/components/dashboard-category-filter";
 import { DashboardHero } from "@/features/dashboard/components/dashboard-hero";
 import { DashboardServiceSections } from "@/features/dashboard/components/dashboard-service-sections";
@@ -31,17 +32,45 @@ export function DashboardClient({
         location={location}
         user={user}
         selectedCategory={selectedCategory}
+        services={services}
+        loading={loading}
       />
 
       {warnings.length > 0 ? (
-        <section className="rounded-4xl border border-amber-200 bg-amber-50 p-6 shadow-card">
-          <h2 className="font-display text-2xl font-semibold text-amber-950">
-            Before you go
-          </h2>
-          <div className="mt-3 grid gap-2 text-sm text-amber-900">
-            {warnings.map((warning) => (
-              <p key={warning}>{warning}</p>
-            ))}
+        <section className="glass-panel relative overflow-hidden rounded-4xl p-6 shadow-card md:p-7">
+          <div className="relative grid gap-6 md:grid-cols-[0.82fr_1.18fr] md:gap-8">
+            <div className="space-y-4">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.18em] text-accentDark">
+                <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_18px_rgba(242,140,40,0.75)]" />
+                Time-sensitive checks
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-white/45">
+                  Heads up
+                </p>
+                <h2 className="mt-2 font-display text-2xl font-semibold text-white">
+                  Before you go
+                </h2>
+              </div>
+
+              <p className="max-w-sm text-sm leading-6 text-white/62">
+                A few details still need manual confirmation before you make
+                the trip.
+              </p>
+            </div>
+
+            <div className="grid gap-3">
+              {warnings.map((warning) => (
+                <div
+                  key={warning}
+                  className="surface-card flex items-start gap-3 rounded-3xl p-4"
+                >
+                  <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-accent shadow-[0_0_18px_rgba(242,140,40,0.65)]" />
+                  <p className="text-sm leading-6 text-white/72">{warning}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       ) : null}
@@ -52,8 +81,18 @@ export function DashboardClient({
       />
 
       {loading ? (
-        <section className="rounded-4xl border border-black/5 bg-white p-8 text-center shadow-card">
-          Loading nearby services...
+        <section
+          aria-busy="true"
+          aria-live="polite"
+          className="glass-panel rounded-4xl p-5 shadow-card"
+        >
+          <div className="surface-card flex min-h-[10rem] items-center justify-center rounded-[1.75rem] px-6 py-8 text-center text-sm text-white/58">
+            <BouncingDots
+              message="Loading nearby services..."
+              messagePlacement="right"
+              className="bg-accentDark"
+            />
+          </div>
         </section>
       ) : null}
 

@@ -5,9 +5,6 @@ export default function HomePage() {
     <div className="grid-lines">
       <section className="mx-auto flex min-h-[calc(100vh-12rem)] max-w-6xl flex-col justify-center gap-10 px-4 py-12 md:min-h-[calc(100vh-10rem)] md:px-6">
         <div className="max-w-3xl">
-          <p className="text-sm uppercase tracking-[0.28em] text-white/48">
-            Toronto demo MVP
-          </p>
           <h1 className="mt-4 font-display text-5xl font-semibold leading-[0.95] md:text-7xl">
             Find nearby support, then plan toward stability.
           </h1>

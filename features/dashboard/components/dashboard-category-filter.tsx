@@ -12,7 +12,7 @@ export function DashboardCategoryFilter({
   onSelectCategory: (category: ServiceCategory | null) => void;
 }) {
   return (
-    <section className="glass-panel rounded-4xl p-5 shadow-card">
+    <section id="nearby-services" className="glass-panel scroll-mt-24 rounded-4xl p-5 shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-white/45">Browse by need</p>
