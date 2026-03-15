@@ -9,13 +9,17 @@ const suggestionChips = [
 
 export function RoadmapIntake({
   needs,
+  needsInput,
   loading,
-  onNeedsChange,
+  onNeedsInputChange,
+  onAddNeed,
   onGenerate
 }: {
   needs: string[];
+  needsInput: string;
   loading: boolean;
-  onNeedsChange: (needs: string[]) => void;
+  onNeedsInputChange: (value: string) => void;
+  onAddNeed: (need: string) => void;
   onGenerate: () => void;
 }) {
   return (
@@ -31,29 +35,28 @@ export function RoadmapIntake({
           <button
             key={chip}
             type="button"
-            onClick={() =>
-              onNeedsChange(needs.includes(chip) ? needs : [...needs, chip])
-            }
+            onClick={() => onAddNeed(chip)}
             className="btn-secondary rounded-full px-4 py-2 text-sm"
+            disabled={needs.includes(chip)}
           >
             {chip}
           </button>
         ))}
       </div>
 
-      <textarea
-        value={needs.join("\n")}
-        onChange={(event) =>
-          onNeedsChange(
-            event.target.value
-              .split("\n")
-              .map((line) => line.trim())
-              .filter(Boolean)
-          )
-        }
-        rows={8}
-        className="input-surface mt-5 w-full rounded-3xl px-5 py-4 outline-none transition"
-      />
+      <div className="surface-card mt-5 overflow-hidden rounded-[2rem] border border-white/10 shadow-card transition focus-within:border-accent/40 focus-within:bg-white/[0.02]">
+        <div className="flex items-center justify-between gap-3 border-b border-white/8 px-5 py-3">
+          <p className="text-xs uppercase tracking-[0.2em] text-white/38">Your priorities</p>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">One need per line</p>
+        </div>
+        <textarea
+          value={needsInput}
+          onChange={(event) => onNeedsInputChange(event.target.value)}
+          rows={8}
+          placeholder={"Replace ID\nFind stable housing support\nGet legal help about income"}
+          className="chat-scrollbar min-h-[18rem] w-full resize-y bg-transparent px-5 py-4 text-base leading-8 text-white outline-none placeholder:text-white/28"
+        />
+      </div>
       <button
         type="button"
         onClick={onGenerate}

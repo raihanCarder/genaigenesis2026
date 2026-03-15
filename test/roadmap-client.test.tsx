@@ -1,7 +1,14 @@
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RoadmapClient } from "@/components/roadmap-client";
 import { useAppStore } from "@/store/app-store";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn()
+  })
+}));
 
 describe("RoadmapClient", () => {
   beforeEach(() => {
@@ -22,6 +29,6 @@ describe("RoadmapClient", () => {
     );
 
     expect(screen.getByText("Roadmap planning is for logged-in users")).toBeInTheDocument();
-    expect(screen.getByRole("button")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Log in" })).toBeInTheDocument();
   });
 });

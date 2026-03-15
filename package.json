@@ -18,6 +18,7 @@
     "@supabase/supabase-js": "^2.57.4",
     "class-variance-authority": "^0.7.1",
     "cobe": "^0.6.5",
+    "fill-range": "^7.1.1",
     "framer-motion": "^12.36.0",
     "langchain": "^1.2.32",
     "lucide-react": "^0.577.0",
