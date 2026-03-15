@@ -1,23 +1,15 @@
+import { fetchDashboardPayload } from "@/features/dashboard/api/dashboard-api";
 import { fetchJson } from "@/lib/api/fetch-json";
 import {
   RoadmapResponseSchema,
-  ServiceWithMetaSchema,
   type LocationContext,
   type RoadmapResponse,
   type ServiceWithMeta
 } from "@/lib/types";
 
-const RoadmapServicesResponseSchema = ServiceWithMetaSchema.array();
-
 export async function fetchRoadmapServices(location: LocationContext): Promise<ServiceWithMeta[]> {
-  const params = new URLSearchParams({
-    lat: location.latitude.toString(),
-    lng: location.longitude.toString(),
-    radius: "6000"
-  });
-
-  const payload = await fetchJson<unknown>(`/api/services?${params.toString()}`);
-  return RoadmapServicesResponseSchema.parse(payload);
+  const payload = await fetchDashboardPayload(location);
+  return payload.services;
 }
 
 export async function requestRoadmap(input: {
@@ -33,7 +25,7 @@ export async function requestRoadmap(input: {
     body: JSON.stringify({
       needs: input.needs,
       constraints: {
-        city: "Toronto",
+        city: input.location.city ?? input.location.label,
         wantsLongTermStability: true
       },
       location: {

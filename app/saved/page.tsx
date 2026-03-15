@@ -1,14 +1,5 @@
-import { TORONTO_CENTER } from "@/lib/adapters/google-maps";
 import { SavedClient } from "@/components/saved-client";
-
-function getLocationFromSearchParams(searchParams: Record<string, string | string[] | undefined>) {
-  const lat = Number(searchParams.lat);
-  const lng = Number(searchParams.lng);
-  const label = typeof searchParams.label === "string" ? searchParams.label : TORONTO_CENTER.label;
-  return Number.isFinite(lat) && Number.isFinite(lng)
-    ? { latitude: lat, longitude: lng, label }
-    : TORONTO_CENTER;
-}
+import { getLocationFromSearchParams } from "@/lib/location";
 
 export default async function SavedPage({
   searchParams
@@ -19,4 +10,3 @@ export default async function SavedPage({
   const location = getLocationFromSearchParams(resolvedSearchParams);
   return <SavedClient initialLocation={location} />;
 }
-

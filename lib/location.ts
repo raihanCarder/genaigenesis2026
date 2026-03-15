@@ -11,9 +11,21 @@ export function getLocationFromSearchParams(searchParams: SearchParamsRecord): L
   const lat = Number(getSingleValue(searchParams.lat));
   const lng = Number(getSingleValue(searchParams.lng));
   const label = getSingleValue(searchParams.label) ?? TORONTO_CENTER.label;
+  const placeId = getSingleValue(searchParams.placeId);
+  const city = getSingleValue(searchParams.city);
+  const region = getSingleValue(searchParams.region);
+  const country = getSingleValue(searchParams.country);
 
   return Number.isFinite(lat) && Number.isFinite(lng)
-    ? { latitude: lat, longitude: lng, label }
+    ? {
+        latitude: lat,
+        longitude: lng,
+        label,
+        placeId,
+        city,
+        region,
+        country
+      }
     : TORONTO_CENTER;
 }
 
@@ -34,6 +46,19 @@ export function buildLocationSearchParams(
     lng: location.longitude.toString(),
     label: location.label
   });
+
+  if (location.placeId) {
+    params.set("placeId", location.placeId);
+  }
+  if (location.city) {
+    params.set("city", location.city);
+  }
+  if (location.region) {
+    params.set("region", location.region);
+  }
+  if (location.country) {
+    params.set("country", location.country);
+  }
 
   if (extras?.category) {
     params.set("category", extras.category);

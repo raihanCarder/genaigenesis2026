@@ -1,12 +1,17 @@
 "use client";
 
 import createGlobe, { type COBEOptions } from "cobe";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type GlobeConfig = Partial<
   Omit<COBEOptions, "height" | "onRender" | "width">
 >;
+
+export type GlobePin = {
+  location: [latitude: number, longitude: number];
+  label?: string;
+};
 
 export const GLOBE_CONFIG: Omit<COBEOptions, "height" | "onRender" | "width"> =
   {
@@ -34,12 +39,68 @@ export const GLOBE_CONFIG: Omit<COBEOptions, "height" | "onRender" | "width"> =
     ],
   };
 
+type ProjectedPin = GlobePin & {
+  left: number;
+  top: number;
+  visible: boolean;
+};
+
+function toRadians(value: number) {
+  return (value * Math.PI) / 180;
+}
+
+function toWorldPoint(location: GlobePin["location"]) {
+  const [latitude, longitude] = location;
+  const lat = toRadians(latitude);
+  const lng = toRadians(longitude);
+  const cosLat = Math.cos(lat);
+
+  return {
+    x: cosLat * Math.cos(lng),
+    y: -cosLat * Math.sin(lng),
+    z: Math.sin(lat)
+  };
+}
+
+function projectPin(
+  pin: GlobePin,
+  phi: number,
+  theta: number
+): ProjectedPin {
+  const point = toWorldPoint(pin.location);
+  const cosPhi = Math.cos(phi);
+  const sinPhi = Math.sin(phi);
+  const cosTheta = Math.cos(theta);
+  const sinTheta = Math.sin(theta);
+
+  const localX = point.x * cosPhi + point.z * sinPhi;
+  const localY =
+    point.x * sinPhi * sinTheta +
+    point.y * cosTheta -
+    point.z * cosPhi * sinTheta;
+  const localZ =
+    -point.x * sinPhi * cosTheta +
+    point.y * sinTheta +
+    point.z * cosPhi * cosTheta;
+
+  return {
+    ...pin,
+    left: 50 + localX * 40,
+    top: 50 - localY * 40,
+    visible: localZ > 0
+  };
+}
+
 export function Globe({
   className,
   config,
+  pins = [],
+  autoRotateSpeed = 0.005
 }: {
   className?: string;
   config?: GlobeConfig;
+  pins?: GlobePin[];
+  autoRotateSpeed?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const phiRef = useRef(0);
@@ -47,6 +108,7 @@ export function Globe({
   const pointerStartRef = useRef<number | null>(null);
   const pointerMovementRef = useRef(0);
   const rotationRef = useRef(0);
+  const [projectedPins, setProjectedPins] = useState<ProjectedPin[]>([]);
 
   function updatePointerInteraction(value: number | null) {
     pointerStartRef.current = value;
@@ -65,6 +127,28 @@ export function Globe({
     pointerMovementRef.current = delta;
     rotationRef.current = delta / 200;
   }
+
+  useEffect(() => {
+    if (pins.length === 0) {
+      setProjectedPins([]);
+      return;
+    }
+
+    let frameId = 0;
+
+    const updatePins = () => {
+      const phi = phiRef.current + rotationRef.current;
+      const theta = config?.theta ?? GLOBE_CONFIG.theta;
+      setProjectedPins(pins.map((pin) => projectPin(pin, phi, theta)));
+      frameId = window.requestAnimationFrame(updatePins);
+    };
+
+    updatePins();
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [config?.theta, pins]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -116,7 +200,7 @@ export function Globe({
         height: widthRef.current * 2,
         onRender: (state) => {
           if (pointerStartRef.current === null) {
-            phiRef.current += 0.005;
+            phiRef.current += autoRotateSpeed;
           }
 
           state.phi = phiRef.current + rotationRef.current;
@@ -140,7 +224,7 @@ export function Globe({
       cleanupResize();
       globe?.destroy();
     };
-  }, [config]);
+  }, [autoRotateSpeed, config]);
 
   return (
     <div
@@ -166,6 +250,27 @@ export function Globe({
         onPointerLeave={() => updatePointerInteraction(null)}
         onPointerCancel={() => updatePointerInteraction(null)}
       />
+      {projectedPins
+        .filter((pin) => pin.visible)
+        .map((pin) => (
+          <div
+            key={`${pin.location[0]}-${pin.location[1]}`}
+            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-[calc(100%+0.15rem)]"
+            style={{
+              left: `${pin.left}%`,
+              top: `${pin.top}%`
+            }}
+          >
+            <div className="flex flex-col items-center gap-1">
+              {pin.label ? (
+                <div className="max-w-[10rem] truncate rounded-full border border-white/20 bg-black/70 px-2.5 py-1 text-[10px] font-medium text-white">
+                  {pin.label}
+                </div>
+              ) : null}
+              <span className="block h-3 w-3 rounded-full border border-white/70 bg-accent" />
+            </div>
+          </div>
+        ))}
     </div>
   );
 }
