@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { geocodeLocation } from "@/lib/adapters/google-maps";
+import { geocodeLocation } from "@/lib/location/google-maps";
 
 export async function POST(request: Request) {
   try {

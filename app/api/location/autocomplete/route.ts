@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { autocompleteLocations } from "@/lib/adapters/google-maps";
+import { autocompleteLocations } from "@/lib/location/google-maps";
 
 export async function GET(request: Request) {
   try {

@@ -1,4 +1,4 @@
-import { SavedClient } from "@/components/saved-client";
+import { SavedClient } from "@/features/saved/components/saved-client";
 import { getLocationFromSearchParams } from "@/lib/location";
 
 export default async function SavedPage({

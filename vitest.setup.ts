@@ -7,6 +7,19 @@ const processWithEnvLoader = process as NodeJS.Process & {
 
 processWithEnvLoader.loadEnvFile?.();
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn()
+  }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/"
+}));
+
 afterEach(() => {
   vi.restoreAllMocks();
 });

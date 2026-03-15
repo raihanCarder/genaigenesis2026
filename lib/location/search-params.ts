@@ -1,4 +1,4 @@
-import { TORONTO_CENTER } from "@/lib/adapters/google-maps";
+import { DEFAULT_LOCATION } from "@/lib/location/defaults";
 import { ServiceCategorySchema, type LocationContext, type ServiceCategory } from "@/lib/types";
 
 type SearchParamsRecord = Record<string, string | string[] | undefined>;
@@ -10,7 +10,7 @@ function getSingleValue(value: string | string[] | undefined) {
 export function getLocationFromSearchParams(searchParams: SearchParamsRecord): LocationContext {
   const lat = Number(getSingleValue(searchParams.lat));
   const lng = Number(getSingleValue(searchParams.lng));
-  const label = getSingleValue(searchParams.label) ?? TORONTO_CENTER.label;
+  const label = getSingleValue(searchParams.label) ?? DEFAULT_LOCATION.label;
   const placeId = getSingleValue(searchParams.placeId);
   const city = getSingleValue(searchParams.city);
   const region = getSingleValue(searchParams.region);
@@ -26,7 +26,7 @@ export function getLocationFromSearchParams(searchParams: SearchParamsRecord): L
         region,
         country
       }
-    : TORONTO_CENTER;
+    : DEFAULT_LOCATION;
 }
 
 export function getCategoryFromSearchParams(searchParams: SearchParamsRecord) {

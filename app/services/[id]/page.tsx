@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { FavoriteButton } from "@/components/favorite-button";
-import { buildDirectionsUrl } from "@/lib/adapters/google-maps";
+import { buildDirectionsUrl } from "@/lib/location/google-maps";
 import { hasGoogleMapsEnv } from "@/lib/env";
 import { buildLocationSearchParams, getLocationFromSearchParams } from "@/lib/location";
 import { getServiceById } from "@/lib/services/query";

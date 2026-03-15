@@ -1,12 +1,37 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const favorites: Array<{ id: string; name: string }> = [];
+
 vi.mock("@/lib/auth/server", () => ({
-  requireUserFromRequest: vi.fn(async () => ({ uid: "user-1" }))
+  requireUserFromRequest: vi.fn(async () => ({ id: "user-1" }))
+}));
+
+vi.mock("@/lib/supabase/server", () => ({
+  createSupabaseServerClient: vi.fn(async () => ({ mocked: true }))
+}));
+
+vi.mock("@/lib/services/favorites-store", () => ({
+  listFavorites: vi.fn(async () => [...favorites]),
+  saveFavorite: vi.fn(async (_supabase, _userId, service) => {
+    favorites.splice(
+      0,
+      favorites.length,
+      ...favorites.filter((favorite) => favorite.id !== service.id),
+      service
+    );
+  }),
+  removeFavorite: vi.fn(async (_supabase, _userId, serviceId) => {
+    const index = favorites.findIndex((favorite) => favorite.id === serviceId);
+    if (index >= 0) {
+      favorites.splice(index, 1);
+    }
+  })
 }));
 
 describe("/api/favorites", () => {
   beforeEach(() => {
     vi.resetModules();
+    favorites.splice(0, favorites.length);
   });
 
   it("saves and returns favorites for the authenticated user", async () => {

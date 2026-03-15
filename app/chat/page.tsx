@@ -1,4 +1,4 @@
-import { ChatClient } from "@/components/chat-client";
+import { ChatClient } from "@/features/chat/components/chat-client";
 import { getCategoryFromSearchParams, getLocationFromSearchParams } from "@/lib/location";
 
 export default async function ChatPage({
