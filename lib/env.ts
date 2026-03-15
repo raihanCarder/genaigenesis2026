@@ -3,7 +3,7 @@ import { z } from "zod";
 const serverEnvSchema = z.object({
   GOOGLE_MAPS_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
-  GEMINI_MODEL: z.string().default("gemini-1.5-flash"),
+  GEMINI_MODEL: z.string().default("gemini-1.5-pro"),
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
   FIREBASE_PRIVATE_KEY: z.string().optional()
@@ -44,3 +44,9 @@ export const hasFirebaseClientEnv = Boolean(
     clientEnv.NEXT_PUBLIC_FIREBASE_APP_ID
 );
 
+if (typeof window === "undefined") {
+  console.log("========================================");
+  console.log("SERVER BOOT: GEMINI KEY CHECK");
+  console.log("KEY START:", process.env.GEMINI_API_KEY?.slice(0, 5) || "NOT FOUND");
+  console.log("========================================");
+}
