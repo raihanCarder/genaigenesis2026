@@ -113,7 +113,7 @@ test/
 - Tailwind CSS
 - Zustand for client state
 - Zod for runtime validation
-- LangChain and Gemini for grounded AI behaviors
+- Gemini paired with LangChain and LangGraph technologies for advisory logic
 - Google Maps and Places APIs for geocoding and enrichment
 - Brave Search for trusted web discovery
 - Supabase Auth and Postgres for user sessions and saved services
