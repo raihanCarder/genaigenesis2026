@@ -10,11 +10,16 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@langchain/community": "^1.1.23",
+    "@langchain/core": "^1.1.32",
+    "@langchain/google-genai": "^2.1.25",
+    "@langchain/langgraph": "^1.2.2",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.4",
     "class-variance-authority": "^0.7.1",
     "cobe": "^0.6.5",
     "framer-motion": "^12.36.0",
+    "langchain": "^1.2.32",
     "lucide-react": "^0.577.0",
     "motion": "^12.36.0",
     "next": "^15.0.0",

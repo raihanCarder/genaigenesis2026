@@ -12,10 +12,6 @@ export async function POST(request: Request) {
     }
     const services = ServiceWithMetaSchema.array().parse(body.services.slice(0, 12));
     const response = await generateRoadmap({
-      needs: body.needs,
-      constraints: body.constraints,
-      location: body.location,
-      services
     });
     return NextResponse.json(RoadmapResponseSchema.parse(response));
   } catch (error) {

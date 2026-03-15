@@ -10,6 +10,19 @@ import {
   type ServiceWithMeta
 } from "@/lib/types";
 import { formatDistance, safeJsonParse } from "@/lib/utils";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { BraveSearch } from "@langchain/community/tools/brave_search";
+import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { z } from "zod";
+import { RunnableSequence } from "@langchain/core/runnables";
+
+const ClientProfileSchema = z.object({
+  demographics: z.string().describe("Age, gender, or family status if mentioned."),
+  professionalBackground: z.string().describe("Work history or education."),
+  currentAssets: z.array(z.string()).describe("Items they have (e.g., laptop, ID, transit pass)."),
+  immediateBarriers: z.array(z.string()).describe("Direct obstacles (e.g., evicted today, no phone)."),
+  urgencyLevel: z.enum(["critical", "stable"]).default("critical")
+});
 
 const chatResponseSchemaDefinition = {
   type: "OBJECT",
@@ -152,41 +165,19 @@ function createIrrelevantChatResponse(locationLabel: string) {
   });
 }
 
-function fallbackRoadmapResponse(payload: RoadmapRequestPayload): RoadmapResponse {
-  const [first, second, third] = payload.services;
+function fallbackRoadmapResponse(): RoadmapResponse {
   return RoadmapResponseSchema.parse({
-    situationSummary: `This roadmap focuses on near-term stability priorities based on: ${payload.needs.join(", ")}.`,
+    situationSummary: "This roadmap focuses on near-term stability based on your situation.",
     thisWeek: [
-      first
-        ? {
-            serviceId: first.id,
-            reason: `Start with ${first.name} because it is nearby and directly relevant.`
-          }
-        : { reason: "Start by calling 211 to confirm the best local support options." }
+      { reason: "Start by calling 211 to confirm the best local support options." }
     ],
-    thisMonth: second
-      ? [
-          {
-            serviceId: second.id,
-            reason: `Use ${second.name} as the next step to stabilize access to support.`
-          }
-        ]
-      : [],
-    longerTerm: third
-      ? [
-          {
-            serviceId: third.id,
-            reason: `Keep ${third.name} in your plan for longer-term follow-up and stability.`
-          }
-        ]
-      : [],
+    thisMonth: [],
+    longerTerm: [],
     notes: [
       "Keep important numbers saved or written down.",
       "Verify appointment hours before traveling to time-sensitive services."
     ],
-    verificationWarnings: payload.services.some((service) => service.freshnessState !== "fresh")
-      ? ["Some service records may be stale or incomplete."]
-      : []
+    verificationWarnings: ["Some service records may be stale or incomplete."]
   });
 }
 
@@ -302,49 +293,119 @@ export async function generateGroundedChat(payload: ChatRequestPayload) {
   }
 }
 
-export async function generateRoadmap(payload: RoadmapRequestPayload) {
-  if (!hasGeminiEnv) {
-    return fallbackRoadmapResponse(payload);
+export async function generateRoadmap(rawInput: string): Promise<RoadmapResponse> {
+  if (!hasGeminiEnv || !serverEnv.BRAVE_SEARCH_API_KEY) {
+    return fallbackRoadmapResponse();
   }
-  try {
-    const prompt = [
-      "You are an expert, empathetic social worker generating a highly detailed stability roadmap.",
-      "Output MUST be valid JSON matching this exact structure: { \"situationSummary\": string, \"thisWeek\": [{ \"serviceId\": string, \"reason\": string }], \"thisMonth\": [...], \"longerTerm\": [...], \"notes\": [string], \"verificationWarnings\": [string] }",
-      "RULES FOR TAILORING:",
-      "1. CONTEXT SYNTHESIS: You must deeply analyze the 'User Constraints/Background' field. Tailor the entire roadmap to their specific qualifications, history, and barriers.",
-      "2. situationSummary MUST be a robust 3-4 sentence paragraph acknowledging their specific background (e.g., leveraging their degree or past experience) while validating their current crisis.",
-      "3. 'thisWeek' MUST focus strictly on immediate survival and stability using ONLY the provided Service IDs.",
-      "4. For general advice in 'thisMonth' and 'longerTerm' where you don't have a specific service, YOU MUST STILL USE THE OBJECT FORMAT: { \"reason\": \"Your detailed, actionable advice here\" }.",
-      "5. Do not use markdown formatting or backticks.",
-      "6. Give specific instructions on what the user should do, when they should do it, what exactly they need to do, why this step matters, and what to do if these plans fail.",
-      `User Needs: ${payload.needs.join(", ")}`,
-      `User Constraints/Background: ${JSON.stringify(payload.constraints ?? {})}`,
-      `Services Available: ${JSON.stringify(buildServiceSummary(payload.services))}`
-    ].join("\n");
-    const parsed = await generateJson<RoadmapResponse>(
-      prompt,
-      "RoadmapResponse",
-      roadmapResponseSchemaDefinition
-    );
-    const validated = RoadmapResponseSchema.parse(parsed);
-    const knownIds = new Set(payload.services.map((service) => service.id));
-    const sanitize = <T extends Array<{ serviceId?: string; reason: string }>>(steps: T) =>
-      steps.filter((step) => !step.serviceId || knownIds.has(step.serviceId)) as T;
 
-    const verificationWarnings = new Set(validated.verificationWarnings ?? []);
-    if (payload.services.some((service) => service.freshnessState !== "fresh")) {
-      verificationWarnings.add("Some service records may be stale or incomplete.");
+  try {
+    const extractorLlm = new ChatGoogleGenerativeAI({
+      model: serverEnv.GEMINI_MODEL || "gemini-2.5-flash",
+      apiKey: serverEnv.GEMINI_API_KEY,
+      temperature: 0, 
+    });
+
+    const agentLlm = new ChatGoogleGenerativeAI({
+      model: serverEnv.GEMINI_MODEL || "gemini-2.5-flash",
+      apiKey: serverEnv.GEMINI_API_KEY,
+      temperature: 0.4, // Keep the bump for loop prevention
+    });
+
+    const tools = [
+      new BraveSearch({ apiKey: serverEnv.BRAVE_SEARCH_API_KEY }),
+    ];
+
+    const analyzer = extractorLlm.withStructuredOutput(ClientProfileSchema);
+
+    const roadmapChain = RunnableSequence.from([
+      // Step A: Extract directly from the raw string
+      async (input: string) => {
+        console.log("🔍 Running Analyzer Node...");
+        return await analyzer.invoke(`Analyze this crisis background and extract facts: ${input}`);
+      },
+
+      // Step B: Pipe the profile into the Agent
+      async (profile) => {
+        console.log("🧠 Analyzer Output:", JSON.stringify(profile, null, 2));
+
+        const systemPrompt = `You are a Senior Case Manager in Toronto. Your clients are in high-stress crisis.
+        Explain every step as if they have never dealt with the government or social services before.
+
+        CLIENT PROFILE (Extracted Facts):
+        - Demographics: ${profile.demographics}
+        - Background: ${profile.professionalBackground}
+        - Assets: ${profile.currentAssets.join(", ")}
+        - Barriers: ${profile.immediateBarriers.join(", ")}
+        - Urgency: ${profile.urgencyLevel}
+
+        COMMUNICATION RULES:
+        1. DETAILED DEPTH: Every 'reason' MUST be 4-6 sentences long. Do not be brief.
+        2. TACTICAL PARAGRAPHS: Write each 'reason' as ONE cohesive paragraph. Do NOT use line breaks (\\n), markdown, or headers inside the JSON string. Weave the instructions, the 'why', and what ID to bring naturally into the sentences.
+        3. NO JARGON: Explain terms like "Central Intake" or "Ontario Works" immediately.
+        4. VALIDATION: Start the situationSummary with a kind, grounded acknowledgment of their specific background.
+
+        RESEARCH RULES:
+        1. USE TOOLS: Search for EXACT physical addresses and subway stations for Toronto offices.
+        2. If the user has a degree/skills, search for specialized employment programs.
+
+        OUTPUT RULES:
+        {
+          "situationSummary": "3-4 sentences of warm, tactical welcome.",
+          "thisWeek": [{ "serviceId": "...", "reason": "MUST be 4-6 sentences with specific 'How-To' instructions." }],
+          "thisWeek_summary": "A 4-5 word summary of thisWeek.",
+          "thisMonth": [...],
+          "thisMonth_summary": "A 4-5 word summary of thisMonth.",
+          "longerTerm": [...],
+          "longerTerm_summary": "A 4-5 word summary of longerTerm.",
+          "notes": ["Tips on safety/ID/organization"],
+          "verificationWarnings": ["Warnings about hours/verification"]
+        }
+        CRITICAL: Raw JSON only. No markdown. Fill every array.`;
+        
+        const agent = createReactAgent({
+          llm: agentLlm,
+          tools,
+          messageModifier: systemPrompt,
+        });
+
+        console.log("🚀 Launching Strategist Agent...");
+        // Pass the raw text directly to the agent as the user's message
+        return await agent.invoke({
+          messages: [["user", `Client's exact words: "${rawInput}"`]]
+        });
+      }
+    ]);
+
+    // Just pass the string directly into the chain!
+    const finalResult = await roadmapChain.invoke(rawInput);
+    const finalMessage = finalResult.messages[finalResult.messages.length - 1];
+
+    let rawContent = "";
+    if (typeof finalMessage.content === "string") {
+      rawContent = finalMessage.content;
+    } else if (Array.isArray(finalMessage.content)) {
+      rawContent = finalMessage.content.map((p: any) => ('text' in p ? p.text : '')).join("");
     }
 
-    return RoadmapResponseSchema.parse({
-      ...validated,
-      thisWeek: sanitize(validated.thisWeek),
-      thisMonth: sanitize(validated.thisMonth),
-      longerTerm: sanitize(validated.longerTerm),
-      verificationWarnings: Array.from(verificationWarnings)
-    });
-  } catch (error) {
-    console.error("ALARM - AI FAILED:", error); 
-    return fallbackRoadmapResponse(payload);
-}
+    // Snipe the JSON to avoid conversational bleed
+    let cleanedJson = rawContent.replace(/```json|```/g, "").trim();
+    const firstBrace = cleanedJson.indexOf('{');
+    const lastBrace = cleanedJson.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      cleanedJson = cleanedJson.substring(firstBrace, lastBrace + 1);
+    }
+
+    const parsed = JSON.parse(cleanedJson);
+    return RoadmapResponseSchema.parse(parsed);
+
+  } catch (error: any) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Agentic Roadmap Failed:", errorMessage);
+
+    if (error.name === "ZodError" && error.issues) {
+      console.error("Validation Issues:", JSON.stringify(error.issues, null, 2));
+    }
+
+    return fallbackRoadmapResponse();
+  }
 }
