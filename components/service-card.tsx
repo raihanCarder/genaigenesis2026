@@ -16,7 +16,7 @@ function freshnessCopy(state?: ServiceWithMeta["freshnessState"]) {
 
 export function ServiceCard({
   service,
-  locationParams
+  locationParams,
 }: {
   service: ServiceWithMeta;
   locationParams?: string;
@@ -25,7 +25,7 @@ export function ServiceCard({
     <article className="flex h-[26rem] flex-col rounded-4xl border border-black/5 bg-white p-5 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-black/45">
+          <p className="text-xs uppercase tracking-[0.2em] text-white/45">
             {formatCategoryLabel(service.category)}
           </p>
           <h3 className="mt-2 text-xl font-semibold">{service.name}</h3>
@@ -35,7 +35,7 @@ export function ServiceCard({
               display: "-webkit-box",
               WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical",
-              overflow: "hidden"
+              overflow: "hidden",
             }}
           >
             {service.description ?? service.address}
@@ -51,7 +51,7 @@ export function ServiceCard({
           {freshnessCopy(service.freshnessState)}
         </span>
         {service.sourceName ? (
-          <span className="rounded-full bg-black/5 px-3 py-1.5 text-black/55">
+          <span className="surface-subtle rounded-full px-3 py-1.5 text-white/55">
             Source: {service.sourceName}
           </span>
         ) : null}
@@ -64,7 +64,7 @@ export function ServiceCard({
       <div className="mt-auto flex flex-wrap gap-3 pt-5">
         <Link
           href={`/services/${service.id}${locationParams ? `?${locationParams}` : ""}`}
-          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-accentDark"
+          className="btn-primary rounded-full px-4 py-2 text-sm font-medium"
         >
           Details
         </Link>
@@ -72,7 +72,7 @@ export function ServiceCard({
           href={buildDirectionsUrl(service)}
           target="_blank"
           rel="noreferrer"
-          className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium transition hover:border-accent/40 hover:bg-accent/5"
+          className="btn-secondary rounded-full px-4 py-2 text-sm font-medium"
         >
           Directions
         </a>

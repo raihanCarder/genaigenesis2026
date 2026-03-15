@@ -87,9 +87,9 @@ export function DashboardServiceSections({
 
   if (visibleServices.length === 0) {
     return (
-      <section className="rounded-4xl border border-black/5 bg-white p-8 shadow-card">
+      <section className="surface-card rounded-4xl p-8 shadow-card">
         <h2 className="font-display text-2xl font-semibold">No exact matches in this view</h2>
-        <p className="mt-3 max-w-2xl text-black/65">
+        <p className="mt-3 max-w-2xl text-white/65">
           Try switching categories, returning to all results, or using chat to broaden the search.
         </p>
       </section>
@@ -103,12 +103,12 @@ export function DashboardServiceSections({
           <section key={group.category} className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-black/45">Category</p>
+                <p className="text-xs uppercase tracking-[0.22em] text-white/45">Category</p>
                 <h2 className="font-display text-2xl font-semibold">
                   {formatCategoryLabel(group.category)}
                 </h2>
               </div>
-              <div className="text-sm text-black/55">{group.services.length} options</div>
+              <div className="text-sm text-white/55">{group.services.length} options</div>
             </div>
             <ServiceCarouselRow
               category={group.category}

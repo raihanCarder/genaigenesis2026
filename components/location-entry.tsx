@@ -9,14 +9,17 @@ import {
   LocationAutocompleteResponseSchema,
   LocationGeocodeResponseSchema,
   type LocationContext,
-  type LocationSuggestion
+  type LocationSuggestion,
 } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 
 const AUTOCOMPLETE_DEBOUNCE_MS = 250;
 
 function createSessionToken() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -42,7 +45,7 @@ function toLocationContext(payload: {
     placeId: payload.placeId,
     city: payload.city,
     region: payload.region,
-    country: payload.country
+    country: payload.country,
   } satisfies LocationContext;
 }
 
@@ -60,7 +63,8 @@ export function LocationEntry() {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [sessionToken, setSessionToken] = useState(() => createSessionToken());
 
-  const activeSuggestion = suggestions[highlightedIndex >= 0 ? highlightedIndex : 0];
+  const activeSuggestion =
+    suggestions[highlightedIndex >= 0 ? highlightedIndex : 0];
 
   useEffect(() => {
     return () => {
@@ -86,10 +90,13 @@ export function LocationEntry() {
       try {
         const params = new URLSearchParams({
           input: trimmedQuery,
-          sessionToken
+          sessionToken,
         });
-        const payload = await fetchJson<unknown>(`/api/location/autocomplete?${params.toString()}`);
-        const nextSuggestions = LocationAutocompleteResponseSchema.parse(payload);
+        const payload = await fetchJson<unknown>(
+          `/api/location/autocomplete?${params.toString()}`,
+        );
+        const nextSuggestions =
+          LocationAutocompleteResponseSchema.parse(payload);
         if (requestId !== requestIdRef.current) {
           return;
         }
@@ -133,9 +140,9 @@ export function LocationEntry() {
     const payload = await fetchJson<unknown>("/api/location/geocode", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(input)
+      body: JSON.stringify(input),
     });
     const resolved = LocationGeocodeResponseSchema.parse(payload);
     await pushLocation(
@@ -146,8 +153,8 @@ export function LocationEntry() {
         placeId: resolved.placeId,
         city: resolved.city,
         region: resolved.region,
-        country: resolved.country
-      })
+        country: resolved.country,
+      }),
     );
   }
 
@@ -160,7 +167,7 @@ export function LocationEntry() {
     await resolveAndPushLocation({
       location: suggestion.label,
       placeId: suggestion.placeId,
-      label: suggestion.label
+      label: suggestion.label,
     });
   }
 
@@ -176,7 +183,11 @@ export function LocationEntry() {
       }
       resetAutocomplete();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to set location.");
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to set location.",
+      );
     } finally {
       setPending(false);
     }
@@ -195,22 +206,24 @@ export function LocationEntry() {
           await resolveAndPushLocation({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            label: "Current location"
+            label: "Current location",
           });
         } catch {
           await pushLocation({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            label: "Current location"
+            label: "Current location",
           });
         } finally {
           setPending(false);
         }
       },
       () => {
-        setError("We could not access your current location. Try typing a neighborhood or address.");
+        setError(
+          "We could not access your current location. Try typing a neighborhood or address.",
+        );
         setPending(false);
-      }
+      },
     );
   }
 
@@ -219,13 +232,19 @@ export function LocationEntry() {
     void pushLocation(TORONTO_CENTER);
   }
 
-  const showSuggestions = inputFocused && (loadingSuggestions || suggestions.length > 0);
+  const showSuggestions =
+    inputFocused && (loadingSuggestions || suggestions.length > 0);
 
   return (
-    <form onSubmit={handleSubmit} className="glass-panel rounded-4xl p-6 shadow-card">
+    <form
+      onSubmit={handleSubmit}
+      className="glass-panel rounded-4xl p-6 shadow-card"
+    >
       <div className="grid gap-4">
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-black/65">Enter a location</span>
+          <span className="text-sm font-medium text-black/65">
+            Enter a location
+          </span>
           <div className="relative">
             <input
               value={query}
@@ -240,7 +259,10 @@ export function LocationEntry() {
                 setInputFocused(true);
               }}
               onBlur={() => {
-                blurTimeoutRef.current = window.setTimeout(() => setInputFocused(false), 120);
+                blurTimeoutRef.current = window.setTimeout(
+                  () => setInputFocused(false),
+                  120,
+                );
               }}
               onKeyDown={(event) => {
                 if (!showSuggestions || suggestions.length === 0) {
@@ -248,12 +270,14 @@ export function LocationEntry() {
                 }
                 if (event.key === "ArrowDown") {
                   event.preventDefault();
-                  setHighlightedIndex((current) => (current + 1) % suggestions.length);
+                  setHighlightedIndex(
+                    (current) => (current + 1) % suggestions.length,
+                  );
                 }
                 if (event.key === "ArrowUp") {
                   event.preventDefault();
                   setHighlightedIndex((current) =>
-                    current <= 0 ? suggestions.length - 1 : current - 1
+                    current <= 0 ? suggestions.length - 1 : current - 1,
                   );
                 }
                 if (event.key === "Escape") {
@@ -269,7 +293,7 @@ export function LocationEntry() {
                       setError(
                         caughtError instanceof Error
                           ? caughtError.message
-                          : "Unable to set location."
+                          : "Unable to set location.",
                       );
                     })
                     .finally(() => setPending(false));
@@ -288,10 +312,13 @@ export function LocationEntry() {
                 className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 grid overflow-hidden rounded-3xl border border-black/10 bg-white shadow-card"
               >
                 {loadingSuggestions && suggestions.length === 0 ? (
-                  <p className="px-4 py-3 text-sm text-black/50">Finding likely locations...</p>
+                  <p className="px-4 py-3 text-sm text-black/50">
+                    Finding likely locations...
+                  </p>
                 ) : null}
                 {suggestions.map((suggestion, index) => {
-                  const highlighted = index === (highlightedIndex >= 0 ? highlightedIndex : 0);
+                  const highlighted =
+                    index === (highlightedIndex >= 0 ? highlightedIndex : 0);
                   return (
                     <button
                       key={`${suggestion.placeId ?? suggestion.label}-${index}`}
@@ -308,18 +335,24 @@ export function LocationEntry() {
                             setError(
                               caughtError instanceof Error
                                 ? caughtError.message
-                                : "Unable to set location."
+                                : "Unable to set location.",
                             );
                           })
                           .finally(() => setPending(false));
                       }}
                       className={`grid gap-1 px-4 py-3 text-left transition ${
-                        highlighted ? "bg-[#f7efe4]" : "bg-white hover:bg-black/5"
+                        highlighted
+                          ? "bg-[#f7efe4]"
+                          : "bg-white hover:bg-black/5"
                       }`}
                     >
-                      <span className="text-sm font-medium text-black">{suggestion.primaryText}</span>
+                      <span className="text-sm font-medium text-black">
+                        {suggestion.primaryText}
+                      </span>
                       {suggestion.secondaryText ? (
-                        <span className="text-sm text-black/55">{suggestion.secondaryText}</span>
+                        <span className="text-sm text-black/55">
+                          {suggestion.secondaryText}
+                        </span>
                       ) : null}
                     </button>
                   );
@@ -332,26 +365,26 @@ export function LocationEntry() {
           <button
             type="submit"
             disabled={pending}
-            className="rounded-full bg-ink px-5 py-3 font-medium text-white transition hover:bg-accentDark disabled:opacity-60"
+            className="btn-primary rounded-full px-5 py-3 font-medium disabled:opacity-60"
           >
             {pending ? "Finding services..." : "Open dashboard"}
           </button>
           <button
             type="button"
             onClick={handleCurrentLocation}
-            className="rounded-full border border-black/10 bg-white px-5 py-3 font-medium transition hover:border-accent/40 hover:bg-accent/5"
+            className="btn-secondary rounded-full px-5 py-3 font-medium"
           >
             Use my location
           </button>
           <button
             type="button"
             onClick={handleDemoLocation}
-            className="rounded-full border border-black/10 bg-black/5 px-5 py-3 font-medium transition hover:bg-black/10"
+            className="btn-secondary rounded-full px-5 py-3 font-medium"
           >
             Load Toronto demo
           </button>
         </div>
-        {error ? <p className="text-sm text-red-700">{error}</p> : null}
+        {error ? <p className="text-sm text-accentDark">{error}</p> : null}
       </div>
     </form>
   );

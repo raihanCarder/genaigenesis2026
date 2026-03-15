@@ -27,50 +27,50 @@ export function RoadmapResults({
   return (
     <section className="grid gap-4">
       <div className="glass-panel rounded-4xl p-6 shadow-card">
-        <p className="text-xs uppercase tracking-[0.22em] text-black/45">Plan horizon</p>
+        <p className="text-xs uppercase tracking-[0.22em] text-white/45">Plan horizon</p>
         <h2 className="font-display text-2xl font-semibold">{location.label}</h2>
-        <p className="mt-3 text-sm text-black/60">
+        <p className="mt-3 text-sm text-white/60">
           This plan uses nearby services plus your stated needs. It is not a same-day crisis triage tool.
         </p>
       </div>
 
       {servicesLoading ? (
-        <div className="rounded-4xl border border-black/5 bg-white p-6 text-sm text-black/55 shadow-card">
+        <div className="surface-card rounded-4xl p-6 text-sm text-white/55 shadow-card">
           Loading nearby services for roadmap planning...
         </div>
       ) : null}
 
       {servicesError ? (
-        <div className="rounded-4xl border border-red-200 bg-red-50 p-6 text-sm text-red-800 shadow-card">
+        <div className="error-panel rounded-4xl p-6 text-sm shadow-card">
           {servicesError}
         </div>
       ) : null}
 
       {requestError ? (
-        <div className="rounded-4xl border border-red-200 bg-red-50 p-6 text-sm text-red-800 shadow-card">
+        <div className="error-panel rounded-4xl p-6 text-sm shadow-card">
           {requestError}
         </div>
       ) : null}
 
       {response ? (
         <div className="grid gap-4">
-          <div className="rounded-4xl border border-black/5 bg-white p-5 shadow-card">
+          <div className="surface-card rounded-4xl p-5 shadow-card">
             <h3 className="font-display text-2xl font-semibold">Situation summary</h3>
-            <p className="mt-3 text-black/65">{response.situationSummary}</p>
+            <p className="mt-3 text-white/65">{response.situationSummary}</p>
           </div>
 
           {roadmapSections.map((section) => (
-            <div key={section.key} className="rounded-4xl border border-black/5 bg-white p-5 shadow-card">
+            <div key={section.key} className="surface-card rounded-4xl p-5 shadow-card">
               <h3 className="font-display text-2xl font-semibold">{section.label}</h3>
               <div className="mt-4 grid gap-3">
                 {response[section.key].length > 0 ? (
                   response[section.key].map((step) => (
-                    <div key={`${section.key}-${step.reason}`} className="rounded-3xl bg-[#fbf7f1] p-4 text-sm text-black/70">
+                    <div key={`${section.key}-${step.reason}`} className="surface-subtle rounded-3xl p-4 text-sm text-white/70">
                       {step.reason}
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-3xl bg-[#fbf7f1] p-4 text-sm text-black/55">
+                  <div className="surface-subtle rounded-3xl p-4 text-sm text-white/55">
                     No specific step returned for this horizon.
                   </div>
                 )}
@@ -78,9 +78,9 @@ export function RoadmapResults({
             </div>
           ))}
 
-          <div className="rounded-4xl border border-black/5 bg-white p-5 shadow-card">
+          <div className="surface-card rounded-4xl p-5 shadow-card">
             <h3 className="font-display text-2xl font-semibold">Notes</h3>
-            <div className="mt-4 grid gap-2 text-sm text-black/65">
+            <div className="mt-4 grid gap-2 text-sm text-white/65">
               {response.notes.map((note) => (
                 <p key={note}>• {note}</p>
               ))}
@@ -93,11 +93,10 @@ export function RoadmapResults({
           </div>
         </div>
       ) : (
-        <div className="rounded-4xl border border-dashed border-black/10 bg-white p-8 text-sm text-black/55 shadow-card">
+        <div className="surface-card rounded-4xl border-dashed border-white/10 p-8 text-sm text-white/55 shadow-card">
           Generate a roadmap to see a staged plan for this week, this month, and longer term.
         </div>
       )}
     </section>
   );
 }
-
