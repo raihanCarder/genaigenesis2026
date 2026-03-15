@@ -49,6 +49,7 @@ export function ChatClient({
   const [contextError, setContextError] = useState<string | null>(null);
   const [chatError, setChatError] = useState<string | null>(null);
   const conversationRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     setLocation(location);
@@ -168,9 +169,10 @@ export function ChatClient({
                   key={chip}
                   type="button"
                   onClick={() => {
-                    void sendMessage(chip);
+                    setInput(chip);
+                    textareaRef.current?.focus();
                   }}
-                  disabled={!contextReady || loading}
+                  disabled={loading}
                   className="btn-secondary rounded-full px-3 py-1.5 text-xs disabled:opacity-50"
                 >
                   {chip}
@@ -262,8 +264,9 @@ export function ChatClient({
                 void sendMessage(input);
               }}
             >
-              <div className="rounded-[1.45rem] border border-white/10 bg-[#0f0f0f] p-2 transition focus-within:border-accent/40">
+              <div className="rounded-[1.45rem] border border-white/10 bg-[#0f0f0f] p-2 transition focus-within:border-white/30 focus-within:bg-white/[0.03]">
                 <textarea
+                  ref={textareaRef}
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   onKeyDown={(event) => {
@@ -338,8 +341,7 @@ export function ChatClient({
         <div className="surface-card flex min-h-0 flex-col overflow-hidden rounded-[1.75rem] p-4 shadow-card">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-white/42">In this result set</p>
-              <h2 className="mt-1.5 font-display text-xl font-semibold">Nearby options</h2>
+              <h2 className="font-display text-xl font-semibold">Nearby options</h2>
             </div>
             <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/45">
               Top {Math.min(4, services.length)}

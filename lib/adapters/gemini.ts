@@ -1,5 +1,5 @@
 import { hasGeminiEnv, serverEnv } from "@/lib/env";
-import { logError } from "@/lib/logger";
+import { logWarn } from "@/lib/logger";
 import {
   ChatResponseSchema,
   RoadmapResponseSchema,
@@ -10,6 +10,92 @@ import {
   type ServiceWithMeta
 } from "@/lib/types";
 import { formatDistance, safeJsonParse } from "@/lib/utils";
+
+const chatResponseSchemaDefinition = {
+  type: "OBJECT",
+  properties: {
+    summary: { type: "STRING" },
+    recommendedServices: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          serviceId: { type: "STRING" },
+          reason: { type: "STRING" }
+        },
+        required: ["serviceId", "reason"],
+        propertyOrdering: ["serviceId", "reason"]
+      }
+    },
+    nextSteps: {
+      type: "ARRAY",
+      items: { type: "STRING" }
+    },
+    verificationWarning: { type: "STRING", nullable: true }
+  },
+  required: ["summary", "recommendedServices", "nextSteps"],
+  propertyOrdering: ["summary", "recommendedServices", "nextSteps", "verificationWarning"]
+} as const;
+
+const roadmapResponseSchemaDefinition = {
+  type: "OBJECT",
+  properties: {
+    situationSummary: { type: "STRING" },
+    thisWeek: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          serviceId: { type: "STRING", nullable: true },
+          reason: { type: "STRING" }
+        },
+        required: ["reason"],
+        propertyOrdering: ["serviceId", "reason"]
+      }
+    },
+    thisMonth: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          serviceId: { type: "STRING", nullable: true },
+          reason: { type: "STRING" }
+        },
+        required: ["reason"],
+        propertyOrdering: ["serviceId", "reason"]
+      }
+    },
+    longerTerm: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          serviceId: { type: "STRING", nullable: true },
+          reason: { type: "STRING" }
+        },
+        required: ["reason"],
+        propertyOrdering: ["serviceId", "reason"]
+      }
+    },
+    notes: {
+      type: "ARRAY",
+      items: { type: "STRING" }
+    },
+    verificationWarnings: {
+      type: "ARRAY",
+      items: { type: "STRING" }
+    }
+  },
+  required: ["situationSummary", "thisWeek", "thisMonth", "longerTerm", "notes", "verificationWarnings"],
+  propertyOrdering: [
+    "situationSummary",
+    "thisWeek",
+    "thisMonth",
+    "longerTerm",
+    "notes",
+    "verificationWarnings"
+  ]
+} as const;
 
 function buildServiceSummary(services: ServiceWithMeta[]) {
   return services.slice(0, 10).map((service) => ({
@@ -90,7 +176,11 @@ function fallbackRoadmapResponse(payload: RoadmapRequestPayload): RoadmapRespons
   });
 }
 
-async function generateJson<T>(prompt: string, schemaName: string) {
+async function generateJson<T>(
+  prompt: string,
+  schemaName: string,
+  responseSchema?: Record<string, unknown>
+) {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${serverEnv.GEMINI_MODEL}:generateContent?key=${serverEnv.GEMINI_API_KEY}`,
     {
@@ -100,7 +190,8 @@ async function generateJson<T>(prompt: string, schemaName: string) {
       },
       body: JSON.stringify({
         generationConfig: {
-          response_mime_type: "application/json",
+          responseMimeType: "application/json",
+          ...(responseSchema ? { responseSchema } : {}),
           temperature: 0.5
         },
         contents: [
@@ -131,7 +222,11 @@ async function generateJson<T>(prompt: string, schemaName: string) {
   if (!text) {
     throw new Error(`Gemini did not return content for ${schemaName}.`);
   }
-  return safeJsonParse<T>(text);
+  const parsed = safeJsonParse<T>(text);
+  if (parsed === null) {
+    throw new Error(`Gemini returned invalid JSON for ${schemaName}: ${text.slice(0, 300)}`);
+  }
+  return parsed;
 }
 
 export async function generateGroundedChat(payload: ChatRequestPayload) {
@@ -142,14 +237,20 @@ export async function generateGroundedChat(payload: ChatRequestPayload) {
     const prompt = [
       "You are a grounded support navigator.",
       "Use only the provided services.",
-      "Return strict JSON matching ChatResponse.",
+      "Return only valid JSON.",
+      "The JSON must exactly match this shape:",
+      '{"summary":"string","recommendedServices":[{"serviceId":"string","reason":"string"}],"nextSteps":["string"],"verificationWarning":"string optional"}',
       "Never invent service names, hours, locations, or eligibility rules.",
       `User question: ${payload.message}`,
       `Selected category: ${payload.selectedCategory ?? "none"}`,
       `Services: ${JSON.stringify(buildServiceSummary(payload.services))}`
     ].join("\n");
 
-    const parsed = await generateJson<ChatResponse>(prompt, "ChatResponse");
+    const parsed = await generateJson<ChatResponse>(
+      prompt,
+      "ChatResponse",
+      chatResponseSchemaDefinition
+    );
     const validated = ChatResponseSchema.parse(parsed);
     const knownIds = new Set(payload.services.map((service) => service.id));
     return ChatResponseSchema.parse({
@@ -157,7 +258,10 @@ export async function generateGroundedChat(payload: ChatRequestPayload) {
       recommendedServices: validated.recommendedServices.filter((item) => knownIds.has(item.serviceId))
     });
   } catch (error) {
-    logError("Gemini chat generation failed", error);
+    logWarn("Gemini chat generation fell back to local response", {
+      reason: error instanceof Error ? error.message : "Unknown Gemini chat failure",
+      model: serverEnv.GEMINI_MODEL
+    });
     return fallbackChatResponse(payload);
   }
 }
@@ -181,7 +285,11 @@ export async function generateRoadmap(payload: RoadmapRequestPayload) {
       `User Constraints/Background: ${JSON.stringify(payload.constraints ?? {})}`,
       `Services Available: ${JSON.stringify(buildServiceSummary(payload.services))}`
     ].join("\n");
-    const parsed = await generateJson<RoadmapResponse>(prompt, "RoadmapResponse");
+    const parsed = await generateJson<RoadmapResponse>(
+      prompt,
+      "RoadmapResponse",
+      roadmapResponseSchemaDefinition
+    );
     const validated = RoadmapResponseSchema.parse(parsed);
     const knownIds = new Set(payload.services.map((service) => service.id));
     const sanitize = <T extends Array<{ serviceId?: string; reason: string }>>(steps: T) =>
