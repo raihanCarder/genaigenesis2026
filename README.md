@@ -75,16 +75,23 @@ app/
 
 components/
   ui/                     Shared UI primitives and visual components
-  *.tsx                   Cross-page components such as nav, chat, save buttons
+  *.tsx                   Shared cross-feature components and wrappers
 
 features/
+  chat/                   Grounded chat UI
   dashboard/              Dashboard-specific UI, hooks, and API client code
   roadmap/                Roadmap-specific UI, hooks, and API client code
+  saved/                  Saved-services UI
 
 lib/
-  adapters/               Gemini, Google Maps, Brave Search, Supabase adapters
+  adapters/               Thin compatibility facades over domain modules
+  ai/                     Gemini transport, chat, and roadmap modules
   auth/                   Server auth helpers
   constants/              Categories and helpline constants
+  discovery/              Trusted web discovery modules
+  location/               Location defaults, URL helpers, cache, Google Maps modules
+  roadmap/                Roadmap builders and view-model mappers
+  shared/                 Reusable cache and network utilities
   services/               Aggregation, normalization, ranking, favorites logic
   supabase/               Browser, server, and middleware clients
   *.ts                    Shared utilities, env parsing, and types
@@ -104,6 +111,8 @@ scripts/
 test/
   *.test.ts(x)            Vitest coverage for dashboard, routes, adapters, and UI
 ```
+
+Architecture notes live in `docs/architecture.md`.
 
 ## Tech Stack
 

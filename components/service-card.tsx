@@ -10,7 +10,7 @@ import {
   Wifi,
   type LucideIcon
 } from "lucide-react";
-import { buildDirectionsUrl } from "@/lib/adapters/google-maps";
+import { buildDirectionsUrl } from "@/lib/location/google-maps";
 import { formatCategoryLabel, formatDistance } from "@/lib/utils";
 import type { ServiceCategory, ServiceWithMeta } from "@/lib/types";
 import { FavoriteButton } from "@/components/favorite-button";

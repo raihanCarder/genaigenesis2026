@@ -3,7 +3,7 @@ import {
   clearCachedDashboardPayload,
   getCachedDashboardPayload,
   setCachedDashboardPayload
-} from "@/lib/dashboard-cache";
+} from "@/lib/location/dashboard-cache";
 import { buildLocationSearchParams } from "@/lib/location";
 import {
   DashboardPayloadSchema,

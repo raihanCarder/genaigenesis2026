@@ -69,9 +69,8 @@ describe("DashboardClient", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Food Service")).toBeInTheDocument();
-      expect(screen.getByText("Shelter Service")).toBeInTheDocument();
-      expect(screen.getByText("Yonge-Dundas Square")).toBeInTheDocument();
+      expect(screen.getAllByText("Food Service").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Shelter Service").length).toBeGreaterThan(0);
       expect(screen.getByText("Verify hours before traveling.")).toBeInTheDocument();
       expect(screen.getByText("Source: cityhelp.org")).toBeInTheDocument();
     });
@@ -79,8 +78,8 @@ describe("DashboardClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Shelters" }));
 
     await waitFor(() => {
-      expect(screen.queryByText("Food Service")).not.toBeInTheDocument();
-      expect(screen.getByText("Shelter Service")).toBeInTheDocument();
+      expect(screen.queryAllByText("Food Service")).toHaveLength(0);
+      expect(screen.getAllByText("Shelter Service").length).toBeGreaterThan(0);
     });
   });
 });

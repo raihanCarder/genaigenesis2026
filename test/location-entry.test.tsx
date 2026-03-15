@@ -106,14 +106,17 @@ describe("LocationEntry", () => {
 
     await act(async () => {
       vi.advanceTimersByTime(300);
+      await Promise.resolve();
     });
+
+    vi.useRealTimers();
 
     await waitFor(() => {
       expect(screen.getByText("New York")).toBeInTheDocument();
       expect(screen.getByText("NY, USA")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /New York/ }));
+    fireEvent.click(screen.getByRole("option", { name: /New York/ }));
 
     await waitFor(() => {
       expect(geocodeBody).toEqual({

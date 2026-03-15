@@ -8,11 +8,11 @@ import {
   RoadmapViewSchema
 } from "@/lib/types";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    await requireUserFromRequest(request);
+    await requireUserFromRequest(req);
 
-    const body = RoadmapRequestPayloadSchema.parse(await request.json());
+    const body = RoadmapRequestPayloadSchema.parse(await req.json());
     const payload = {
       ...body,
       services: body.services.slice(0, 12)
