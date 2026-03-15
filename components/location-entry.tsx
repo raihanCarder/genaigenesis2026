@@ -148,17 +148,17 @@ export function LocationEntry() {
       body: JSON.stringify(input),
     });
     const resolved = LocationGeocodeResponseSchema.parse(payload);
-    await pushLocation(
-      toLocationContext({
-        latitude: resolved.latitude,
-        longitude: resolved.longitude,
-        label: resolved.label ?? resolved.normalizedLocation,
-        placeId: resolved.placeId,
-        city: resolved.city,
-        region: resolved.region,
-        country: resolved.country,
-      }),
-    );
+    const nextLocation = toLocationContext({
+      latitude: resolved.latitude,
+      longitude: resolved.longitude,
+      label: resolved.label ?? resolved.normalizedLocation,
+      placeId: resolved.placeId,
+      city: resolved.city,
+      region: resolved.region,
+      country: resolved.country,
+    });
+    setQuery(nextLocation.label);
+    await pushLocation(nextLocation);
   }
 
   async function submitTypedLocation() {

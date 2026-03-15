@@ -197,9 +197,7 @@ export function DashboardHero({
       <div className="relative grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-stretch md:gap-10">
         <div className="max-w-xl space-y-5 md:space-y-6">
           <div className="space-y-4">
-            <p className="text-sm uppercase tracking-[0.24em] text-white/60">
-              Current location
-            </p>
+            <p className="text-sm uppercase tracking-[0.24em] text-white/60">Location</p>
             <h1 className="font-display text-4xl font-semibold leading-tight">
               {location.label}
             </h1>

@@ -236,7 +236,11 @@ function buildResolvedLocation(
     label?: string;
   }
 ): ResolvedLocation {
-  const label = input.label?.trim() || result.formatted_address || "Selected location";
+  const inputLabel = input.label?.trim();
+  const label =
+    inputLabel && inputLabel.toLowerCase() !== "current location"
+      ? inputLabel
+      : result.formatted_address || "Selected location";
   const locationFields = extractLocationFields(result.address_components);
 
   return {
@@ -255,7 +259,11 @@ function buildResolvedLocationFromPlaceMetadata(
     label?: string;
   } = {}
 ): ResolvedLocation {
-  const label = input.label?.trim() || place.address || place.name;
+  const inputLabel = input.label?.trim();
+  const label =
+    inputLabel && inputLabel.toLowerCase() !== "current location"
+      ? inputLabel
+      : place.address || place.name;
   return {
     normalizedLocation: place.address || label,
     label,
