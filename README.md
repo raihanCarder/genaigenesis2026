@@ -1,207 +1,154 @@
-# Genesis Navigator
+# beacon
 
-Toronto support navigator built with Next.js, Zustand, Supabase, Google Maps, and Gemini.
+`beacon` is a location-aware support navigator built to help people in need find nearby essential services, ask grounded questions about those services, and move from immediate needs toward longer-term stability.
 
-The app has three product layers:
+## Goal
 
-- public dashboard for nearby services
-- public grounded chat over the currently loaded service set
-- authenticated roadmap and saved places
+The project is designed around a simple progression:
 
-## What You Need For It To Work
+- help someone discover relevant nearby support quickly
+- keep answers grounded in real service data instead of generic AI output
+- support longer-term planning and saved places for returning users
 
-There are two levels of "working":
+It is intended for people navigating urgent support needs such as food access, shelter, hygiene, healthcare, legal help, and related community services.
 
-### 1. Local demo mode
+## Product Surface
 
-This is enough to run the app locally with the curated Toronto dataset and fallback behavior.
+- `/` landing page with location entry
+- `/dashboard` ranked local service discovery
+- `/chat` grounded chat over the currently loaded service set
+- `/services/[id]` service detail pages
+- `/plan` signed-in roadmap planning flow
+- `/saved` signed-in saved-services view
 
-Required:
+## Core Features
 
-- Node.js 22+
-- npm
-- the local seed dataset at [data/toronto/services.json](/Users/raihancarder/Desktop/repos/genaigenesis2026/data/toronto/services.json)
+- Location-aware dashboard that combines curated service data with optional Google Places enrichment and trusted web discovery
+- Service normalization, deduplication, distance scoring, freshness handling, and ranking before results reach the UI
+- Grounded Gemini chat that is constrained to the provided services, with local fallback responses when AI credentials are missing
+- Signed-in planning experience for generating a stability roadmap from the user context and available services
+- Favorites persistence backed by Supabase with row-level security
+- Local-first development mode that still works with the bundled seed dataset when external APIs are unavailable
 
-What works in this mode:
+## System Overview
 
-- landing page
-- dashboard
-- service detail pages
-- fallback geocoding for a few Toronto inputs
-- grounded chat with local fallback responses
-- roadmap page UI
+### Request and data flow
 
-What does not fully work in this mode:
+1. A user enters a location on the landing page.
+2. The dashboard resolves that location and loads services from:
+   - the bundled seed dataset at `data/toronto/services.json`
+   - optional Google Maps and Places enrichment
+   - optional trusted web discovery
+3. Service records are normalized, merged, ranked, and limited per category.
+4. The resulting service set powers:
+   - the dashboard UI
+   - grounded chat recommendations
+   - roadmap generation inputs
+5. Signed-in users can save services to Supabase-backed favorites.
 
-- email/password sign-in
-- authenticated roadmap generation with real Supabase auth
-- saved places persistence across sessions
-- live Google geocoding and supplemental Google Places data
-- live Gemini responses
+### Backend surface
 
-### 2. Full integration mode
+- `app/api/dashboard/route.ts`: ranked dashboard payloads
+- `app/api/services/route.ts`: service lookup
+- `app/api/location/*`: geocoding, autocomplete, and static-map utilities
+- `app/api/chat/route.ts`: grounded chat responses
+- `app/api/roadmap/route.ts`: roadmap generation
+- `app/api/favorites/route.ts`: saved service persistence
+- `app/auth/callback/route.ts`: auth callback handling
 
-This is what you need for the complete MVP behavior.
+### Validation and state
 
-Required external services:
+- Zod schemas in `lib/types.ts` define service, location, dashboard, chat, roadmap, and favorites contracts.
+- Zustand in `store/app-store.ts` manages client-side app state such as user and location context.
 
-- Google Maps Platform
-- Gemini API
-- Supabase Auth
-- Supabase Postgres
-- Supabase SSR cookie sessions for server-side route protection
+## Project Structure
 
-## Setup
+```text
+app/
+  api/                    Next.js route handlers
+  auth/                   Auth callback route
+  chat/                   Grounded chat page
+  dashboard/              Dashboard page
+  plan/                   Roadmap page
+  saved/                  Saved-services page
+  services/[id]/          Service detail pages
 
-1. Install dependencies:
+components/
+  ui/                     Shared UI primitives and visual components
+  *.tsx                   Cross-page components such as nav, chat, save buttons
 
-```bash
-npm install
+features/
+  dashboard/              Dashboard-specific UI, hooks, and API client code
+  roadmap/                Roadmap-specific UI, hooks, and API client code
+
+lib/
+  adapters/               Gemini, Google Maps, Brave Search, Supabase adapters
+  auth/                   Server auth helpers
+  constants/              Categories and helpline constants
+  services/               Aggregation, normalization, ranking, favorites logic
+  supabase/               Browser, server, and middleware clients
+  *.ts                    Shared utilities, env parsing, and types
+
+data/toronto/
+  services.json           Current bundled seed dataset
+
+store/
+  app-store.ts            Zustand app state
+
+supabase/
+  favorites.sql           Favorites table and RLS policies
+
+scripts/
+  test-roadmap.ts         Manual roadmap test helper
+
+test/
+  *.test.ts(x)            Vitest coverage for dashboard, routes, adapters, and UI
 ```
 
-2. Copy env vars:
+## Tech Stack
 
-```bash
-cp .env.example .env
-```
+- Next.js 15 with the App Router
+- React 19
+- TypeScript
+- Tailwind CSS
+- Zustand for client state
+- Zod for runtime validation
+- LangChain and Gemini for grounded AI behaviors
+- Google Maps and Places APIs for geocoding and enrichment
+- Brave Search for trusted web discovery
+- Supabase Auth and Postgres for user sessions and saved services
+- Vitest and Testing Library for automated tests
 
-3. Set up Supabase:
+## Environment Variables
 
-- create a Supabase project
-- enable Email auth
-- copy `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- run the SQL in [supabase/favorites.sql](/Users/raihancarder/Desktop/repos/genaigenesis2026/supabase/favorites.sql) inside the Supabase SQL editor
+Copy `.env.example` to `.env` and fill in the values you need.
 
-4. Start the app:
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `GOOGLE_MAPS_API_KEY` | Optional | Live geocoding, place details, and supplemental place search |
+| `GOOGLE_PLACES_API_FLAVOR` | Optional | Places API mode, defaults to `legacy` |
+| `GEMINI_API_KEY` | Optional | Live grounded chat and roadmap generation |
+| `GEMINI_MODEL` | Optional | Gemini model name, defaults to `gemini-2.5-flash` |
+| `BRAVE_SEARCH_API_KEY` | Optional | Trusted web discovery for service enrichment |
+| `NEXT_PUBLIC_SUPABASE_URL` | Required for auth and favorites | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Required for auth and favorites | Supabase publishable key |
 
-```bash
-npm run dev
-```
+### Local fallback behavior
 
-5. Optional verification:
+The app still runs without the optional external credentials:
 
-```bash
-npm run typecheck
-npm test
-npm run build
-```
+- without Google Maps, it falls back to bundled location handling
+- without Gemini, it returns local fallback chat and roadmap responses
+- without Brave Search, trusted web discovery is skipped
+- without Supabase, signed-in flows such as saved services are not available
 
-## Required Environment Variables
+## Data Model
 
-These are defined in [.env.example](/Users/raihancarder/Desktop/repos/genaigenesis2026/.env.example).
+The repository currently includes a seed dataset at `data/toronto/services.json`.
 
-### Google Maps
+The product itself is not Toronto-specific. Any region can be supported as long as service records follow the same schema and the relevant local data is supplied.
 
-- `GOOGLE_MAPS_API_KEY`
-
-Used for:
-
-- location geocoding
-- supplemental Google Places results for some categories
-- directions links use a public Google Maps URL and do not require extra setup
-
-If missing:
-
-- the app falls back to a few hardcoded Toronto geocoding results
-- supplemental Google Places results are skipped
-
-### Gemini
-
-- `GEMINI_API_KEY`
-- `GEMINI_MODEL`
-
-Used for:
-
-- grounded chat responses
-- roadmap generation
-
-If missing:
-
-- the app returns local fallback chat and roadmap responses instead of live model output
-
-### Supabase
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-
-Used for:
-
-- email/password auth in the browser
-- cookie-backed server auth in route handlers and protected pages
-- favorites persistence in Postgres
-
-If missing:
-
-- the sign-in button is disabled
-- roadmap and saved pages remain blocked behind auth
-
-### Supabase Database Setup
-
-This app uses Supabase browser auth plus cookie-backed server auth. It does not require a service role key for the current feature set.
-
-Quick setup in the Supabase dashboard:
-
-1. Create a new project.
-2. Go to `Authentication` -> `Providers` -> `Email` and enable email/password sign-ins.
-3. Optional: disable email confirmation if you want sign-up to create an immediately usable account during local development.
-4. Go to `Project Settings` -> `API`.
-5. Copy the project URL into `NEXT_PUBLIC_SUPABASE_URL`.
-6. Copy the publishable key into `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-   If your dashboard still labels it as the anon/public key, use that value.
-7. Go to `SQL Editor`.
-8. Paste the contents of [supabase/favorites.sql](/Users/raihancarder/Desktop/repos/genaigenesis2026/supabase/favorites.sql) and run it.
-
-That SQL creates:
-
-- `public.favorites`
-- a unique constraint on `(user_id, service_id)`
-- an index for recent favorites
-- row-level security policies so users can only read and write their own rows
-
-## Data You Need
-
-### 1. Curated service dataset
-
-The main required app data is [data/toronto/services.json](/Users/raihancarder/Desktop/repos/genaigenesis2026/data/toronto/services.json).
-
-This file is the core source of truth for:
-
-- food
-- services
-- free food events
-- showers
-- shelters
-- clinics
-- legal help
-- bathrooms
-- Wi-Fi and charging
-
-Each record must match the `Service` schema defined in [lib/types.ts](/Users/raihancarder/Desktop/repos/genaigenesis2026/lib/types.ts).
-
-### Minimum required fields per service
-
-- `id`
-- `name`
-- `category`
-- `address`
-- `latitude`
-- `longitude`
-- `sourceType`
-
-### Recommended fields
-
-- `description`
-- `phone`
-- `website`
-- `hoursText`
-- `eligibilityNotes`
-- `tags`
-- `sourceName`
-- `sourceUrl`
-- `lastVerifiedAt`
-- `confidenceScore`
-
-### Allowed categories
+Supported service categories:
 
 - `food`
 - `services`
@@ -213,118 +160,75 @@ Each record must match the `Service` schema defined in [lib/types.ts](/Users/rai
 - `legal-help`
 - `wifi-charging`
 
-### Allowed source types
+Each service record is validated against the schemas in `lib/types.ts`.
 
-- `maps`
-- `scraped`
-- `manual`
-- `open-data`
+## How To Run
 
-### Example service record
+### Prerequisites
 
-```json
-{
-  "id": "food-example",
-  "name": "Example Food Program",
-  "category": "food",
-  "description": "Meals and food bank support.",
-  "address": "123 Example St, Toronto, ON",
-  "latitude": 43.6532,
-  "longitude": -79.3832,
-  "phone": "(416) 555-0100",
-  "website": "https://example.org",
-  "hoursText": "Mon-Fri 9:00 AM-5:00 PM",
-  "sourceType": "manual",
-  "sourceName": "Toronto curated dataset",
-  "sourceUrl": "https://example.org",
-  "lastVerifiedAt": "2026-03-01T12:00:00.000Z",
-  "confidenceScore": 0.95,
-  "tags": ["meals", "food bank"]
-}
-```
+- Node.js 20 or newer
+- npm
 
-## Data Quality Expectations
+### Local setup
 
-The app works best when each curated record has:
+1. Install dependencies:
 
-- accurate coordinates
-- a real address string
-- a recent `lastVerifiedAt`
-- a sensible `confidenceScore` between `0` and `1`
+   ```bash
+   npm install
+   ```
 
-Freshness is derived from category plus `lastVerifiedAt`, so stale or missing timestamps reduce trust messaging quality.
+2. Create your local environment file:
 
-## External Data Behavior
+   ```bash
+   cp .env.example .env
+   ```
 
-### Google Places
+3. Fill in the environment variables you want to use.
 
-The app supplements curated data with Google Places only for categories where maps data is useful:
+4. If you want auth and saved services, create a Supabase project and run:
 
-- `clinics`
-- `bathrooms`
-- `wifi-charging`
-- some `services`
+   - the SQL in `supabase/favorites.sql`
+   - Email auth in the Supabase dashboard
 
-You do not need to preload that data locally. It is fetched at runtime when `GOOGLE_MAPS_API_KEY` is present.
+5. Start the development server:
 
-### Supabase / Postgres
+   ```bash
+   npm run dev
+   ```
 
-Favorites are stored in:
+6. Open `http://localhost:3000`.
 
-- `public.favorites`
+## Available Scripts
 
-Each favorite row stores:
+- `npm run dev`: start the local development server
+- `npm run build`: create a production build
+- `npm run start`: run the production build
+- `npm run typecheck`: run TypeScript without emitting files
+- `npm test`: run the Vitest suite
 
-- `user_id`
-- `service_id`
-- `service_snapshot`
-- `saved_at`
+## Development Modes
 
-### Gemini
+### Local dataset mode
 
-Gemini does not need its own dataset. It only receives:
+Useful for UI work, local development, and basic flow validation.
 
-- the user message or roadmap needs
-- a bounded list of normalized services from the backend
-- freshness and confidence metadata
+- uses the current bundled seed dataset
+- supports the public dashboard and service browsing flows
+- returns fallback chat and roadmap responses when AI credentials are missing
 
-So the real data it depends on is still your curated services plus any optional Google Places results.
+### Full integration mode
 
-## What Data You Should Gather Next
+Useful for end-to-end behavior closer to production.
 
-If you want this to feel real in demo or production, gather these for Toronto:
+- Google Maps for live location and place enrichment
+- Gemini for grounded responses and planning output
+- Brave Search for trusted web discovery
+- Supabase for authentication and favorites persistence
 
-- 20 to 50 high-confidence curated service records
-- at least 3 to 5 records each for `food`, `shelters`, `services`, `clinics`, and `legal-help`
-- real `lastVerifiedAt` timestamps for time-sensitive services
-- phone numbers for shelters and food programs
-- eligibility notes for legal, shelter, and ID-related services
+## Contributors
 
-Priority categories for better demo quality:
+Current git history contributors include:
 
-1. `food`
-2. `shelters`
-3. `services`
-4. `clinics`
-5. `legal-help`
-6. `showers`
-
-## Current Fallback Behavior
-
-If keys are missing, the code does not fully fail:
-
-- missing Maps key: fallback Toronto geocoding is used
-- missing Gemini key: local fallback chat and roadmap responses are used
-- missing Supabase config: sign-in is disabled
-- missing Supabase table setup: favorites will fail until the SQL is applied
-
-That makes local UI development easy, but for the full MVP you need all env vars populated.
-
-## Project Structure
-
-- [app](/Users/raihancarder/Desktop/repos/genaigenesis2026/app): Next.js routes and API handlers
-- [components](/Users/raihancarder/Desktop/repos/genaigenesis2026/components): UI and client-side flows
-- [lib](/Users/raihancarder/Desktop/repos/genaigenesis2026/lib): adapters, schemas, auth, and service logic
-- [store](/Users/raihancarder/Desktop/repos/genaigenesis2026/store): Zustand app state
-- [data/toronto/services.json](/Users/raihancarder/Desktop/repos/genaigenesis2026/data/toronto/services.json): curated Toronto service dataset
-- [test](/Users/raihancarder/Desktop/repos/genaigenesis2026/test): Vitest coverage
+- Raihan Carder
+- Suhiyini Kasim
+- Liam Kitsingh

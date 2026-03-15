@@ -8,7 +8,7 @@ import {
   RoadmapViewSchema
 } from "@/lib/types";
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
     await requireUserFromRequest(request);
 
